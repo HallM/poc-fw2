@@ -1,0 +1,10 @@
+{
+  "name": "mhall-poc-example",
+  "version": "0.1.0",
+  "description": "Just a POC-example to show off the POC framework. Very POC.",
+  "scripts": {
+    "start": "node -e \"require('../')\""
+  },
+  "author": "Matt Hall <mdhall@gmail.com>",
+  "license": "MIT"
+}
