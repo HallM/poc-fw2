@@ -81,10 +81,28 @@ export default {
 ```
 Also note: the same decorator system is possible with Java, C#, and many others.
 
+I also feel this may be a clean path (needed some sort of init function):
+```js
+// this is what gets called when the component is created/loaded
+// use it for data fetching or whatever
+export default function *(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {}
+
+// and then export actions individually
+export someAction function *(context: String) {}
+
+@Method('put')
+@Url('/specialize')
+export special function *() {},
+
+// and also lifecycle stuff
+export beforeRender function *() {}
+```
+
 - api-like things
-    - is this in the scope of this framework?
     - if actions get their own section, it's basically an API style anyway
-    - if actions are built into component/pages? maybe we ignore API
+    - if actions are built into component/pages?
+    - but do we need API? is it really much effort to add it in?
+    - on one hand, could have components without render-ables since GET-actions
 
 - plugins (specifying what to load, maybe plugin dependencies, when to load it)
     - when/event based:
@@ -95,13 +113,68 @@ Also note: the same decorator system is possible with Java, C#, and many others.
         - pre-request (how to determine order?)
         - post-request
     - or only have dep declaration and we just always make sure things are loaded right
-    - cannot promise order (well, it's alphabetical+dep based really)
+    - the plugin itself should define when it should be started
+        - the end user shouldn't concern themselves with that
+    - cannot promise the exact order, but can promise dep:event
     - may need like a file to specify which plugins via NPM scripts
     - could also load everything from a /plugins directory
+    - specify in code `server.loadPlugin(require('my-plugin'))` or config file?
+    - complex: could a plugin have multiple stages to loading? possible I guess
+    - a plugin may attach it's own routes
+    - a plugin may attach middlewares are various stages
+    - a plugin could have configuration for itself
+    - maybe deps have events of their own.
+        - "plugin:event" load after the event inside of plugin is done
+        - "plugin" is short for "plugin:default"
+        - "plugin:*" to always mean entirely loaded (default existing or not)
+        - "plugin:notrealevent" should throw an error
+    - in order to prevent the framework from continuing initialization,
+      we should continue to run plugin events until we can no longer.
+      once we run out of events, then move to the next phase of fw init.
+    - possible loader algorithm:
+        - load all the plugins to know what exists, prior to anything
+        - start the framework
+        - do not allow loading more plugins once framework is started
+        - at each stage of the framework initialization:
+            - determine what can run now and mark them (do not run them just yet)
+            - if no items, continue to next stage of initialization
+            - run those items once they're all determined (helps maintain order)
+            - repeat
+
+```js
+// plugin.js
+// nodep can load immediately
+export nodep function() {}
+
+// loaded at some point after another-plugin:event
+@PluginWait('another-plugin', 'event')
+export event function() {}
+
+// waits for the pre-port-bind event from the primary system
+// null (and/or empty string?) means the framework itself
+@PluginWait(null, 'pre-port-bind')
+export ohWaitThisToo function() {}
+
+// default relies on self-start and some other plugin's default
+// '.' means self
+@PluginWait('.', 'start')
+@PluginWait('some-other-plugin')
+export default function() {}
+```
 
 - settings (server side, maybe client side stuff too)
+    - directories
+    - action verb to HTTP verb/method maps (*:1 mapping)
+    - port to listen on
+    - plugin settings
+    - session key
+    - signed cookie key
+    - log level
+    - other log settings
+    - custom URL auto-gen algorithm?
 
 - loading component scripts
+    - we have to load their existence to generate all the action URLs
 
 - custom template engine? reasoning:
     - ability to determine which components should be loaded ahead of time
@@ -136,6 +209,10 @@ Also note: the same decorator system is possible with Java, C#, and many others.
     - this is post initial render, which is server side
     - this may also need to understand subcomponents in order to load anything they need
     - also, figuring out "we already loaded the sidebar, don't reload"
+
+- persist things on the session
+
+- cache system and/or memo-ization system
 
 - typescript friendly
 
