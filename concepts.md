@@ -86,16 +86,15 @@ I also feel this may be a clean path (also, decorators only work with classes):
 // this is what gets called when the component is created/loaded
 // use it for data fetching or whatever
 export class Component {
-    @Model(MyDataModel)
+    // inject access to the data model
+    @Inject(MyDataModel)
     dataModel: MyDataModel,
 
+    // this will be persisted on the user's session
     @Persist
     counter: Number,
 
-    // async constructor is a big noooo, so we use init
-    async init(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {}
-
-    async someAction(context: String) {}
+    async someAction(@Body('bodyParam') bodyParam: String, context: String) {}
 
     // can override the method and url desired
     @Method('put')
@@ -103,7 +102,12 @@ export class Component {
     async special() {}
 
     // and also lifecycle stuff
-    async beforeRender() {}
+    // beforeRender is one place we could do fetching for data
+    // if it turns out we don't render this, we just return false
+    async beforeRender(@Query('queryParam') queryParam: String) {}
+
+    // just writing a quick idea down, similar to tapestry:
+    async get datas(@Query('queryParam') queryParam: String) {}
 }
 ```
 
@@ -185,6 +189,15 @@ export class Plugin {
     - other log settings
     - custom URL auto-gen algorithm?
 
+- components
+    - ideally, asynchronous unlike React
+    - maybe use accessors (gets) to fetch data
+    - would need to know if the data has already been fetched or not
+    - data is looked for in a specific order:
+        - accessor
+        - prop
+        - are there others?
+
 - loading component scripts
     - we have to load their existence to generate all the action URLs
 
@@ -193,6 +206,7 @@ export class Plugin {
     - ability to get a dust-like yet VDOM for client side system
     - React-like yet better separation of concerns (designer vs programmer)
     - ability to make it work with any desired programming language
+    - JSX is a nice syntax, using JS as a backbone mixed with HTML. easy for designers
 
 - if not a custom template engine, could use dust helpers (or a dust-dialect/fork)
     - locks into JS (though, Java+Nashorn et al is possible... eh)
@@ -206,6 +220,10 @@ export class Plugin {
         - then, how to handle live-edits (dev mode)
         - can required items be specified as "Above fold" or async?
     - helper for dropping the page's CSS and JS in
+    - dust doesn't quite support async data props: `{mydata}` is synchronous
+        - it does support helper-contexts that can kinda make it work
+        - the downside to these is they're all executed immediately
+        - could use a lazy evaluation to prevent unneccessary data fetches
 
 - bunch of components for things like actionlink, pagelink, form
 
@@ -228,7 +246,16 @@ export class Plugin {
 
 - typescript friendly
 
+- possibility to stream the response (HTTP Progressive)
+
 - IoC system ?
+    - should be able to inject services
+        - data models
+    - inject request-specific stuff
+        - access to the logged in user
+        - raw request
+        - session
+        - raw response
 
 - hot loading: editing template files and seeing changes reflect.
     - even better if this can be done with CSS and client side JS to an extent
