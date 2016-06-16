@@ -8,8 +8,10 @@ var bluebird = require('bluebird');
 
 var router = express.Router();
 
+// TODO: config paths
 var viewPages = path.resolve('views/pages/');
 var serverPages = path.resolve('server/pages/');
+var serverComponents = path.resolve('server/components/');
 var extension = '.dust';
 
 function wrap(page, genFn) {
@@ -17,7 +19,12 @@ function wrap(page, genFn) {
   return function(req, res, next) {
     cr(req, res, next)
       .then(function(locals) {
-        res.render(page, locals);
+        // TODO: other sorts of returnables, like OK, ERR, REDIRECT
+        if (req.xhr || !page) {
+          res.send(page);
+        } else {
+          res.render(page, locals);
+        }
       })
       .catch(next);
   };
@@ -60,15 +67,61 @@ function determineUrl(filepath) {
   return possibleUrl;
 }
 
-function createRoutesInDir(dir) {
-  var dirfullpath = path.resolve(viewPages, dir);
+function createActionRoutes(component) {
+}
+
+function loadComponentAndCreateRoutes(filepath, filefullpath) {
+}
+
+function createPageRoutes(filepath, filefullpath) {
+  var extensionIndex = filepath.indexOf(extension);
+
+  // make sure it ends in the extension we expect
+  if (extensionIndex === -1 || extensionIndex + extension.length !== filepath.length) {
+    // ignores things like strings file
+    return;
+  }
+
+  var fileNoExt = filepath.substring(0, extensionIndex);
+
+  var url = '/' + determineUrl(fileNoExt);
+
+  var jsfile = fileNoExt + '.js';
+  var jsfullpath = serverPages + path.sep + jsfile;
+
+  // check if a js file exists
+  var jsfstats = null;
+  try {
+    jsfstats = fs.lstatSync(jsfullpath);
+  } catch(e) {
+    // TODO: probably simple just doesnt exist
+    // but could some other event cause this we should notify the user?
+    jsfstats = null;
+  }
+
+  if (!jsfstats || !jsfstats.isFile()) {
+    // create static route
+    console.log('static page', filepath, url);
+    router.get(url, renderStaticPage('pages/' + filepath));
+  } else {
+    console.log('dynamic page', filepath, url, jsfullpath);
+    var impl = require(jsfullpath);
+    // create dynamic route
+    router.get(url, wrap('pages/' + filepath, impl));
+    // also, create any action routes on this file
+    createActionRoutes(impl);
+  }
+}
+
+function scanDirectory(dir, basedir, fn) {
+  var dirfullpath = path.resolve(basedir, dir);
   var files = fs.readdirSync(dirfullpath);
 
   var directories = [];
 
   files.forEach(function(file) {
     var filepath = dir + file;
-    var filefullpath = viewPages + path.sep + filepath;
+    var filefullpath = basedir + path.sep + filepath;
     var fstats = fs.lstatSync(filefullpath);
 
     if (fstats.isDirectory()) {
@@ -76,48 +129,22 @@ function createRoutesInDir(dir) {
       return;
     }
     if (!fstats.isFile()) {
+      // TODO: not sure if we should let people know
       return;
     }
 
-    var extensionIndex = filepath.indexOf(extension);
-
-    // make sure it ends in the extension we expect
-    if (extensionIndex === -1 || extensionIndex + extension.length !== filepath.length) {
-      return;
-    }
-
-    var fileNoExt = filepath.substring(0, extensionIndex);
-
-    var url = '/' + determineUrl(fileNoExt);
-
-    var jsfile = fileNoExt + '.js';
-    var jsfullpath = serverPages + path.sep + jsfile;
-
-    // check if a js file exists
-    var jsfstats = null;
-    try {
-      jsfstats = fs.lstatSync(jsfullpath);
-    } catch(e) {
-      jsfstats = null;
-    }
-
-    if (!jsfstats || !jsfstats.isFile()) {
-      // create static route
-      console.log('static page', filepath, url);
-      router.get(url, renderStaticPage('pages/' + filepath));
-    } else {
-      console.log('dynamic page', filepath, url, jsfullpath);
-      var fn = require(jsfullpath);
-      // create dynamic route
-      router.get(url, wrap('pages/' + filepath, fn));
-    }
+    fn(filepath, filefullpath);
   });
 
   directories.forEach(function(directory) {
-    createRoutesInDir(directory + path.sep);
+    scanDirectory(directory + path.sep, basedir, fn);
   });
 }
 
-createRoutesInDir('');
+// scan for pages based on views (a page must have a view)
+scanDirectory('', viewPages, createPageRoutes);
+
+// scan component implementations to add action routes
+scanDirectory('', serverComponents, loadComponentAndCreateRoutes);
 
 module.exports = router;
