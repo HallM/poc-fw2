@@ -81,21 +81,30 @@ export default {
 ```
 Also note: the same decorator system is possible with Java, C#, and many others.
 
-I also feel this may be a clean path (needed some sort of init function):
-```js
+I also feel this may be a clean path (also, decorators only work with classes):
+```ts
 // this is what gets called when the component is created/loaded
 // use it for data fetching or whatever
-export default function *(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {}
+export class Component {
+    @Model(MyDataModel)
+    dataModel: MyDataModel,
 
-// and then export actions individually
-export someAction function *(context: String) {}
+    @Persist
+    counter: Number,
 
-@Method('put')
-@Url('/specialize')
-export special function *() {},
+    // async constructor is a big noooo, so we use init
+    async init(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {}
 
-// and also lifecycle stuff
-export beforeRender function *() {}
+    async someAction(context: String) {}
+
+    // can override the method and url desired
+    @Method('put')
+    @Url('/specialize')
+    async special() {}
+
+    // and also lifecycle stuff
+    async beforeRender() {}
+}
 ```
 
 - api-like things
@@ -125,8 +134,9 @@ export beforeRender function *() {}
     - a plugin could have configuration for itself
     - maybe deps have events of their own.
         - "plugin:event" load after the event inside of plugin is done
-        - "plugin" is short for "plugin:default"
-        - "plugin:*" to always mean entirely loaded (default existing or not)
+        - ~~"plugin" is short for "plugin:default"~~ -> no defaults
+        - ~~"plugin:*" to always mean entirely loaded (default existing or not)~~
+        - getting rid of "default" lets us say "plugin" means fully loaded
         - "plugin:notrealevent" should throw an error
     - in order to prevent the framework from continuing initialization,
       we should continue to run plugin events until we can no longer.
@@ -141,25 +151,27 @@ export beforeRender function *() {}
             - run those items once they're all determined (helps maintain order)
             - repeat
 
-```js
+```ts
 // plugin.js
-// nodep can load immediately
-export nodep function() {}
+export class Plugin {
+    // nodep can load immediately
+    nodep() {}
 
-// loaded at some point after another-plugin:event
-@PluginWait('another-plugin', 'event')
-export event function() {}
+    // loaded at some point after another-plugin:event
+    @PluginWait('another-plugin', 'event')
+    event() {}
 
-// waits for the pre-port-bind event from the primary system
-// null (and/or empty string?) means the framework itself
-@PluginWait(null, 'pre-port-bind')
-export ohWaitThisToo function() {}
+    // waits for the pre-port-bind event from the primary system
+    // null (and/or empty string?) means the framework itself
+    @PluginWait(null, 'pre-port-bind')
+    ohWaitThisToo() {}
 
-// default relies on self-start and some other plugin's default
-// '.' means self
-@PluginWait('.', 'start')
-@PluginWait('some-other-plugin')
-export default function() {}
+    // waits for self-start and some other plugin's default
+    // '.' means self
+    @PluginWait('.', 'ohWaitThisToo')
+    @PluginWait('some-other-plugin')
+    waitOnSelf() {}
+}
 ```
 
 - settings (server side, maybe client side stuff too)
