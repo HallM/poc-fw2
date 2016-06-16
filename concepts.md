@@ -43,8 +43,43 @@ todo and future:
                 - `anythingelse` -> assume post otherwise
                 - could de-dup by removing exact HTTP verb from URL
                 - 2nd level de-dup removes redundancies like `DELETE /project.project`
-                    - may want to recognize `DELETE /projects.project` too
+                    - may want to recognize plurals: `DELETE /projects.project` -> `DELETE /projects`
                 - in this option, would need a way to configure verbs -> HTTP verb map
+        - of course, allow some way to set custom URL and/or http method
+        - maybe use a sub object? or properties attached to the function?
+    - the last question, no matter the path, what is passed to the action?
+        - i want to keep it params + return values + throws
+```js
+// mycomponent.ts, not fully valid TypeScript with Decorators
+export default {
+    @Body('bodyParam', validations...)
+    someAction: function *(param: String, context: String) {},
+
+    @Query('queryParam', validations...)
+    getMyAction: function *(param: String, context: String) {},
+
+    // even more ideal, may work with typescript:
+    putMyAction: function *(@Query('qaram') q: String, @Body('bparam') b: String, context: String) {}
+
+    // just declaring everything
+    // and yes the params are reverse order here... is possible to make it non-reverse
+    @Method('delete')
+    @Url('/decoratedUrl')
+    @Body('bodyParam')
+    @Query('queryParam')
+    decoratedAction: function *(queryParam: String, bodyParam: String) {},
+
+    // aaand what it looks like with the param decorators
+    @Method('put')
+    @Url('/specialize')
+    specialDecoration: function *(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {},
+
+    // lifecycle/render events
+    beforeRender: function *() {},
+    // ... many more ...
+};
+```
+Also note: the same decorator system is possible with Java, C#, and many others.
 
 - api-like things
     - is this in the scope of this framework?
