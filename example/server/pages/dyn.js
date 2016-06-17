@@ -1,6 +1,6 @@
 'use strict'
 
-class Test {
+module.exports = class DynComponent {
   get dynamicthing() {
     console.log('test');
     return new Promise(resolve => setTimeout(function() {
@@ -18,9 +18,4 @@ class Test {
       resolve('much late');
     }, 5000));
   }
-}
-
-module.exports = function *(req, res, next) {
-  var t = new Test();
-  return t;
-}
+};

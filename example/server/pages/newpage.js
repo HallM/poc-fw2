@@ -1,7 +1,7 @@
 'use strict'
 
-module.exports = function *(req, res, next) {
-  return {
-    something: 'something'
-  };
-}
+module.exports = class NewPage {
+  get something() {
+    return 'something';
+  }
+};

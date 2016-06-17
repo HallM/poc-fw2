@@ -16,25 +16,43 @@ var serverPages = path.resolve('server/pages/');
 var serverComponents = path.resolve('server/components/');
 var extension = '.dust';
 
-function wrap(page, genFn) {
-  var cr = bluebird.coroutine(genFn);
+// TODO: experimenting with lazy-loading, but specifically for dev time only
+// TODO: figure out how to handle errors during page loading
+function wrapPage(page) {
+  // var cr = bluebird.coroutine(genFn);
   return function(req, res, next) {
-    cr(req, res, next)
-      .then(function(locals) {
-        // TODO: other sorts of returnables, like OK, ERR, REDIRECT
-        if (req.xhr || !page) {
-          res.send(page);
-        } else {
-          dust.stream(page, locals).pipe(res);
-        }
-      })
-      .catch(next);
+    var ctx = null;
+    try {
+      var ImplClass = require(path.resolve('server', page));
+      ctx = new ImplClass();
+    } catch(e) {
+    }
+    dust.stream(page, ctx).pipe(res);
+
+    // cr(req, res, next)
+    //   .then(function(locals) {
+    //     // TODO: other sorts of returnables, like OK, ERR, REDIRECT
+    //     if (req.xhr || !page) {
+    //       res.send(page);
+    //     } else {
+    //       dust.stream(page, locals).pipe(res);
+    //     }
+    //   })
+    //   .catch(next);
   };
 }
 
-function renderStaticPage(page) {
+function wrapDynamic(page) {
+  var ImplClass = require(path.resolve('server', page));
   return function(req, res) {
-    res.render(page);
+    var ctx = new ImplClass();
+    dust.stream(page, ctx).pipe(res);
+  };
+}
+
+function wrapStatic(page) {
+  return function(req, res) {
+    dust.stream(page).pipe(res);
   };
 }
 
@@ -101,18 +119,15 @@ function createPageRoutes(filepath, filefullpath) {
     jsfstats = null;
   }
 
-  if (!jsfstats || !jsfstats.isFile()) {
-    // create static route
-    console.log('static page', filepath, url);
-    router.get(url, renderStaticPage('pages/' + filepath));
-  } else {
-    console.log('dynamic page', filepath, url, jsfullpath);
-    var impl = require(jsfullpath);
-    // create dynamic route
-    router.get(url, wrap('pages/' + filepath, impl));
-    // also, create any action routes on this file
-    createActionRoutes(impl);
-  }
+  // if (!jsfstats || !jsfstats.isFile()) {
+  //   console.log('static page', filepath, url);
+  //   router.get(url, wrapStatic('pages/' + filepath));
+  // } else {
+  //   console.log('dynamic page', filepath, url, jsfullpath);
+  //   router.get(url, wrapDynamic('pages/' + filepath, impl));
+  // }
+  console.log('create page', filepath, url);
+  router.get(url, wrapPage('pages/' + fileNoExt));
 }
 
 function scanDirectory(dir, basedir, fn) {

@@ -7,4 +7,4 @@ module.exports = class TestComponent {
       resolve('TTEESSTT');
     }, 500));
   }
-}
+};

@@ -214,6 +214,7 @@ fw.start();
     - dust helpers, ~~because dust.onload caches things often~~
     - dust-as-is: component helper. fork: override partial loader
     - fork is the way to go I think. init component and scope the data better
+    - how to catch errors and respond accordingly though? especially with streaming
     - accessing something from a strings/labels file
     - require JS or CSS
         - can we dynamically build per-page JS or CSS?
