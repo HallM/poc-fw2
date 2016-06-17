@@ -23,7 +23,7 @@ function wrap(page, genFn) {
         if (req.xhr || !page) {
           res.send(page);
         } else {
-          res.render(page, locals);
+          res.render(page, {data: locals});
         }
       })
       .catch(next);
@@ -141,10 +141,11 @@ function scanDirectory(dir, basedir, fn) {
   });
 }
 
+// TODO: dont crash when these directories dont exist
 // scan for pages based on views (a page must have a view)
 scanDirectory('', viewPages, createPageRoutes);
 
 // scan component implementations to add action routes
-scanDirectory('', serverComponents, loadComponentAndCreateRoutes);
+// scanDirectory('', serverComponents, loadComponentAndCreateRoutes);
 
 module.exports = router;

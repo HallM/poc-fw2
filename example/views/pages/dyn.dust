@@ -1,5 +1,5 @@
 <html>
   <body>
-    Hello {dynamicthing}
+    Hello {data.dynamicthing}
   </body>
 </html>
