@@ -211,8 +211,9 @@ fw.start();
 
 - if not a custom template engine, could use dust helpers (or a dust-dialect/fork)
     - locks into JS (though, Java+Nashorn et al is possible... eh)
-    - dust helpers, because dust.onload caches things often
+    - dust helpers, ~~because dust.onload caches things often~~
     - dust-as-is: component helper. fork: override partial loader
+    - fork is the way to go I think. init component and scope the data better
     - accessing something from a strings/labels file
     - require JS or CSS
         - can we dynamically build per-page JS or CSS?
