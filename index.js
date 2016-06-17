@@ -17,10 +17,18 @@ var bodyParser = require('body-parser');
 
 var app = express();
 
-
 app.engine('dust', consolidate.dust);
 app.set('view engine', 'dust');
 app.set('views', 'views');
+// just pre-loading dustjs
+try {
+  consolidate.dust.render('index', {
+    ext: app.get('view engine'),
+    views: app.get('views'),
+    cache: false
+  }, function() {});
+} catch(e) {
+}
 
 // compression should be before the statics and other routes
 app.use(compression());

@@ -5,6 +5,7 @@ var fs = require('fs');
 
 var express = require('express');
 var bluebird = require('bluebird');
+var dust = require('dustjs-linkedin');
 
 var router = express.Router();
 
@@ -23,7 +24,10 @@ function wrap(page, genFn) {
         if (req.xhr || !page) {
           res.send(page);
         } else {
-          res.render(page, {data: locals});
+          dust.stream(page, {data: locals}).pipe(res)
+            .on('end', function() {
+              console.log('Done!');
+            });
         }
       })
       .catch(next);
