@@ -49,39 +49,9 @@ todo and future:
         - maybe use a sub object? or properties attached to the function?
     - the last question, no matter the path, what is passed to the action?
         - i want to keep it params + return values + throws
-```js
-// mycomponent.ts, not fully valid TypeScript with Decorators
-export default {
-    @Body('bodyParam', validations...)
-    someAction: function *(param: String, context: String) {},
 
-    @Query('queryParam', validations...)
-    getMyAction: function *(param: String, context: String) {},
-
-    // even more ideal, may work with typescript:
-    putMyAction: function *(@Query('qaram') q: String, @Body('bparam') b: String, context: String) {}
-
-    // just declaring everything
-    // and yes the params are reverse order here... is possible to make it non-reverse
-    @Method('delete')
-    @Url('/decoratedUrl')
-    @Body('bodyParam')
-    @Query('queryParam')
-    decoratedAction: function *(queryParam: String, bodyParam: String) {},
-
-    // aaand what it looks like with the param decorators
-    @Method('put')
-    @Url('/specialize')
-    specialDecoration: function *(@Query('queryParam') queryParam: String, @Body('bodyParam') bodyParam: String) {},
-
-    // lifecycle/render events
-    beforeRender: function *() {},
-    // ... many more ...
-};
-```
-Also note: the same decorator system is possible with Java, C#, and many others.
-
-I also feel this may be a clean path (also, decorators only work with classes):
+I feel this may be a clean style:
+(note: decorators in typescript only works with classes, but works with Java, C#, and others too)
 ```ts
 // this is what gets called when the component is created/loaded
 // use it for data fetching or whatever
@@ -149,6 +119,7 @@ export class Component {
         - load all the plugins to know what exists, prior to anything
         - start the framework
         - do not allow loading more plugins once framework is started
+        - scan plugins and make sure deps could exist before starting
         - at each stage of the framework initialization:
             - determine what can run now and mark them (do not run them just yet)
             - if no items, continue to next stage of initialization
@@ -157,6 +128,8 @@ export class Component {
 
 ```ts
 // plugin.js
+var fw = require('fw');
+// fw.config() here returns config values from config/plugin.js
 export class Plugin {
     // nodep can load immediately
     nodep() {}
@@ -178,16 +151,42 @@ export class Plugin {
 }
 ```
 
+```ts
+// user's start script:
+// config gets loaded when fw is required in, so if you need it, it's there
+var fw = require('fw');
+
+// fw.config() here returns config values from config/index.js
+
+// maybe db connections or other things needed before doing fw things
+
+// plugins don't bind themselves to give a bit more flexibility
+// minor increase in the amount of end-user code
+fw.plugin(require('fw-plugin'));
+fw.plugin(require('fw-another-plugin')({maybe: 'thisPluginIsSpecial'}));
+fw.plugin(require('fw-some-other-thing'), {extra: 'configStuff'});
+
+// and finally, start the fw
+fw.start();
+```
+
 - settings (server side, maybe client side stuff too)
-    - directories
-    - action verb to HTTP verb/method maps (*:1 mapping)
-    - port to listen on
-    - plugin settings
-    - session key
-    - signed cookie key
-    - log level
-    - other log settings
-    - custom URL auto-gen algorithm?
+    - configurables:
+        - ~~directories~~ config must be known, so let's just enforce a dir structure
+        - action verb to HTTP verb/method maps (*:1 mapping)
+        - port to listen on
+        - plugin settings
+        - session key
+        - signed cookie key
+        - log level
+        - other log settings
+        - custom URL auto-gen algorithm?
+    - potential idea for loading these things:
+        - could go similar to sails here
+        - have a config directory
+        - config/index.js is loaded first
+        - config/*.js are loaded for plugins. `config.plugin = require('config/plugin.js');`
+        - config/local/.. is loaded last to override things (this should be .gitignored)
 
 - components
     - ideally, asynchronous unlike React
@@ -196,7 +195,9 @@ export class Plugin {
     - data is looked for in a specific order:
         - accessor
         - prop
+        - strings file?
         - are there others?
+    - localization may desire a different template for different languages
 
 - loading component scripts
     - we have to load their existence to generate all the action URLs
@@ -220,10 +221,13 @@ export class Plugin {
         - then, how to handle live-edits (dev mode)
         - can required items be specified as "Above fold" or async?
     - helper for dropping the page's CSS and JS in
-    - dust doesn't quite support async data props: `{mydata}` is synchronous
-        - it does support helper-contexts that can kinda make it work
-        - the downside to these is they're all executed immediately
-        - could use a lazy evaluation to prevent unneccessary data fetches
+    - ~~dust doesn't quite support async data props: `{mydata}` is synchronous~~
+        - ~~it does support helper-contexts that can kinda make it work~~
+        - ~~the downside to these is they're all executed immediately~~
+        - ~~could use a lazy evaluation to prevent unneccessary data fetches~~
+    - turns out, dust supports fns and accessors that return promises. works great.
+    - could disable dust's internal cache to get all calls to onload.
+      we cache ourselves, but it allows us to load component scripts
 
 - bunch of components for things like actionlink, pagelink, form
 
@@ -257,6 +261,31 @@ export class Plugin {
         - session
         - raw response
 
-- hot loading: editing template files and seeing changes reflect.
-    - even better if this can be done with CSS and client side JS to an extent
-    - server side? can always just reboot the thing
+- localizable
+    - components could have strings files that are per-language
+    - component templates may need to be different per-language
+    - could there be different URLs for locales?
+    - different behavior for components should warrant different components.
+      so no to using different impl files.
+    - there may need to be different CSS (and JS?) since the template is different
+    - thus, there may be different CSS page-bundles for specific languages
+
+- development friendly
+    - could we use freshy to constantly reload files?
+        - what happens if a request is using old module and freshy reloads it? boom?
+    - could we alter URLs as pages are changes? how bout static->dynamic?
+        - one way could be a middleware that uses rules to reverse map URL to page
+        - but what about when a page with an overridden URL changes?
+            - do we use watchers + freshy then redo the URLs?
+    - hot loading: editing template files and seeing changes reflect.
+        - even better if this can be done with CSS and client side JS to an extent
+        - server side? can always just reboot the thing
+
+- production friendly
+    - should disable all the development friendly stuff that slows things down
+    - should be able to run a build to pre-generate
+        - routes
+        - page JS and CSS bundles
+
+- test friendly
+    - should integrate with a test suite and make it easy to run
