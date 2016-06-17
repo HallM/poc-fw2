@@ -9,8 +9,9 @@
     </style>
   </head>
   <body>
-    Hello {data.dynamicthing}<br>
-    Let's repeat: {data.dynamicthing}
-    test: {data.afunction}
+    Hello {dynamicthing}<br>
+    Let's repeat: {dynamicthing}<br>
+    Maybe a: {>"components/test" param="something" /}
+    test: {afunction}<br>
   </body>
 </html>

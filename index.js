@@ -1,5 +1,6 @@
 'use strict';
 
+var path = require('path');
 var bluebird = require('bluebird');
 var express = require('express');
 var consolidate = require('consolidate');
@@ -16,6 +17,13 @@ var compression = require('compression');
 var bodyParser = require('body-parser');
 
 var app = express();
+
+var dustfork = require('./dust-fork');
+dustfork.resolveImpl = function(elem) {
+  return require(path.resolve('server', elem));
+}
+
+consolidate.requires.dust = dustfork;
 
 app.engine('dust', consolidate.dust);
 app.set('view engine', 'dust');

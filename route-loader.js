@@ -5,7 +5,8 @@ var fs = require('fs');
 
 var express = require('express');
 var bluebird = require('bluebird');
-var dust = require('dustjs-linkedin');
+var consolidate = require('consolidate');
+var dust = consolidate.requires.dust;
 
 var router = express.Router();
 
@@ -24,19 +25,16 @@ function wrap(page, genFn) {
         if (req.xhr || !page) {
           res.send(page);
         } else {
-          dust.stream(page, {data: locals}).pipe(res)
-            .on('end', function() {
-              console.log('Done!');
-            });
+          dust.stream(page, locals).pipe(res);
         }
       })
       .catch(next);
   };
 }
 
-function renderStaticPage(page, locals) {
+function renderStaticPage(page) {
   return function(req, res) {
-    res.render(page, locals);
+    res.render(page);
   };
 }
 
