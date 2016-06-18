@@ -1,4 +1,4 @@
-export class DynComponent {
+export = class DynComponent {
   get dynamicthing() {
     return new Promise(resolve => setTimeout(function() {
       resolve('lazy loading');

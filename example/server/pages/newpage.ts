@@ -1,4 +1,4 @@
-export class NewPage {
+export = class NewPage {
   get something() {
     return 'something';
   }
