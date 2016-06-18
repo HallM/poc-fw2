@@ -19,7 +19,9 @@ todo and future:
     - could do like try{} and attempt to load any available store
 
 - error views
-- method to specify certain behaviors during errors
+    - method to specify certain behaviors during errors
+    - components and streaming make this 10x worse...
+      like how do you partial stream and then ERROR
 
 - specifying actions?
     - are they specified at the component/page level?
