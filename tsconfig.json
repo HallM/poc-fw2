@@ -7,7 +7,7 @@
     "exclude": [
         "example",
         "node_modules",
-        "lib"
+        "rememberance",
+        "typings"
     ]
 }
-

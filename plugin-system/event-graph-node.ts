@@ -7,17 +7,33 @@ export class EventGraphNode {
     // points to things that this depends on
     private inwardLinks: EventGraphNode[]
 
+    private argumentNode: EventGraphNode[]
+
     // the function to execute
     private executor: Function
+    private target: any
+
+    isVisited: boolean
+
+    returnedValue: any
 
     constructor(public eventName: string) {
         this.outwardLinks = [];
         this.inwardLinks = [];
+        this.argumentNode = [];
         this.executor = null;
+        this.target = null;
+        this.isVisited = false;
+        this.returnedValue = undefined;
     }
 
-    claimNode(fn: Function) {
+    claimNode(tgt: any, fn: Function) {
+        this.target = tgt;
         this.executor = fn;
+    }
+
+    addArgument(node: EventGraphNode) {
+        this.argumentNode.splice(0, 0, node);
     }
 
     addDependentOn(node: EventGraphNode) {
@@ -34,8 +50,9 @@ export class EventGraphNode {
         this.outwardLinks.splice(index, 1);
     }
 
-    execute() {
-        this.executor();
+    async execute() {
+        const args = this.argumentNode.map(node => node.returnedValue);
+        this.returnedValue = await this.executor.apply(this.target, args);
     }
 
     getDependencies(): EventGraphNode[] {
@@ -61,7 +78,7 @@ export class EventGraphNode {
     }
 
     isLeaf(): boolean {
-        return this.outwardLinks.length === 0;
+        return this.outwardLinks.length === 0 || this.outwardLinks.every(node => node.isVisited);
     }
 
     toString(): string {

@@ -1,0 +1,25 @@
+"use strict";
+const _1 = require('../plugin-system/');
+const _2 = require("./plugins/body-parser/");
+const _3 = require("./plugins/cookie-parser/");
+const _4 = require("./plugins/error-router/");
+const _5 = require("./plugins/express/");
+const _6 = require("./plugins/express-compression/");
+const _7 = require("./plugins/http-sessions/");
+const _8 = require("./plugins/route-loader/");
+const _9 = require("./plugins/static-routes/");
+const _10 = require("./plugins/view-engine/");
+const pm = new _1.PluginManager();
+pm.addPlugin('body-parser', new _2.default());
+pm.addPlugin('cookie-parser', new _3.default());
+pm.addPlugin('error-router', new _4.default());
+pm.addPlugin('express', new _5.default());
+pm.addPlugin('express-compression', new _6.default());
+pm.addPlugin('http-sessions', new _7.default());
+pm.addPlugin('route-loader', new _8.default());
+pm.addPlugin('static-routes', new _9.default());
+pm.addPlugin('view-engine', new _10.default());
+pm.determineOrder();
+pm.loadAll().then(() => {
+    console.log('all running');
+});

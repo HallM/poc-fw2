@@ -1,4 +1,4 @@
-/// <reference path="../lib/_all.d.ts" />
+/// <reference path="../framework/_all.d.ts" />
 
 /*
   api for plugin-system
@@ -13,13 +13,19 @@
   - ordered phase (can only call loadAll from here)
     - needs the exec stack of events
   - loaded (can not do anything now)
+
+TODO:
+async plugins
+being able to return something and pass as a parameter
 */
 
 import { EventGraphNode } from './event-graph-node';
 
+import { EventMetaKey } from './decorators/event';
 import { WaitOnMetaKey } from './decorators/wait-on';
 import { BlockMetaKey } from './decorators/block';
 
+export { Event } from './decorators/event';
 export { WaitOn } from './decorators/wait-on';
 export { Block } from './decorators/block';
 
@@ -65,11 +71,12 @@ export class PluginManager {
         // get all "events", aka functions and their names
         // the event name is {plugin name}:{fn name}
 
-        const prototype = Object.getPrototypeOf(plugin);
+        // const prototype = Object.getPrototypeOf(plugin);
 
-        const events: string[] = Object
-            .getOwnPropertyNames(prototype)
-            .filter(property => property !== 'constructor' && typeof prototype[property] == 'function');
+        const events: string[] = Reflect.getMetadata(EventMetaKey, plugin) || [];
+        // const events: string[] = Object
+        //     .getOwnPropertyNames(prototype)
+        //     .filter(property => property !== 'constructor' && typeof prototype[property] == 'function');
 
         events.forEach(event => {
             const fn: Function = plugin[event];
@@ -78,13 +85,14 @@ export class PluginManager {
             const eventName: string = `${name}:${event}`;
 
             const node: EventGraphNode = this.findOrCreateNode(eventName);
-            node.claimNode(fn);
+            node.claimNode(plugin, fn);
 
             // TODO: handle the plugin:* node too
 
             waitsOn.forEach(dep => {
                 const depNode: EventGraphNode = this.findOrCreateNode(dep);
                 node.addDependentOn(depNode);
+                node.addArgument(depNode);
                 depNode.addDependencyOf(node);
             });
 
@@ -127,6 +135,7 @@ export class PluginManager {
             }
 
             foundNodes.forEach(node => {
+                node.isVisited = true;
                 // remove the links to the foundNodes
                 const deps = node.getDependencies();
                 deps.forEach(dep => dep.removeDependent(node));
@@ -144,11 +153,14 @@ export class PluginManager {
         this.phase = PmPhase.Ready;
     }
 
-    loadAll() {
+    async loadAll() {
         this.requirePhase(PmPhase.Ready, 'Cannot load plugins until execution order is ready.');
 
         this.phase = PmPhase.Loading;
-        this.graphNodes.forEach(node => node.execute());
+        const count = this.graphNodes.length;
+        for (let i=0; i < count; i++) {
+            await this.graphNodes[i].execute();
+        }
 
         // just remove all the nodes to clear any memory and also prevent re-loads
         this.graphNodes = [];
