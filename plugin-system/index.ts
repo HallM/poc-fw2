@@ -68,10 +68,17 @@ export class PluginManager {
     addPlugin(PluginClass: any) {
         this.requirePhase(PmPhase.Discovery, 'Cannot add plugins once plugin discovery phase is complete.');
 
+        if (!PluginClass) {
+            throw new Error('Cannot add null or undefined as a plugin');
+        }
+
         // get all "events", aka functions and their names
         // the event name is {plugin name}:{fn name}
         const plugin: any = new PluginClass();
         const name: string = PluginClass.pluginName;
+        if (!name) {
+            throw new Error('Cannot add a plugin withou a pluginName');
+        }
 
         const events: string[] = Reflect.getMetadata(EventMetaKey, plugin) || [];
 
