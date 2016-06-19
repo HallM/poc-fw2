@@ -1,14 +1,11 @@
-import { PluginManager } from '../plugin-system/';
+/// <reference path="_all.d.ts" />
 
-import BodyParser from "./plugins/body-parser/";
-import CookieParser from "./plugins/cookie-parser/";
-import ErrorRouter from "./plugins/error-router/";
-import Express from "./plugins/express/";
-import ExpressCompression from "./plugins/express-compression/";
-import HttpSessions from "./plugins/http-sessions/";
-import RouteLoader from "./plugins/route-loader/";
-import StaticRoutes from "./plugins/static-routes/";
-import ViewEngine from "./plugins/view-engine/";
+
+'use strict';
+
+import { PluginManager } from '../plugin-system/';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export default class Framework {
     pluginManager: PluginManager
@@ -16,15 +13,18 @@ export default class Framework {
     constructor() {
         this.pluginManager = new PluginManager();
 
-        this.pluginManager.addPlugin('body-parser', new BodyParser());
-        this.pluginManager.addPlugin('cookie-parser', new CookieParser());
-        this.pluginManager.addPlugin('error-router', new ErrorRouter());
-        this.pluginManager.addPlugin('express', new Express());
-        this.pluginManager.addPlugin('express-compression', new ExpressCompression());
-        this.pluginManager.addPlugin('http-sessions', new HttpSessions());
-        this.pluginManager.addPlugin('route-loader', new RouteLoader());
-        this.pluginManager.addPlugin('static-routes', new StaticRoutes());
-        this.pluginManager.addPlugin('view-engine', new ViewEngine());
+        this.discoverPlugins(__dirname + path.sep + 'plugins');
+    }
+
+    discoverPlugins(directory: string) {
+        var files = fs.readdirSync(directory);
+
+        files.forEach((file) => {
+            var filepath = directory + path.sep + file;
+
+            const PluginClass = require(filepath).default;
+            this.pluginManager.addPlugin(PluginClass);
+        });
     }
 
     start() {

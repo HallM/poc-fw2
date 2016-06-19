@@ -7,6 +7,8 @@ import { Event, WaitOn, Block } from '../../../plugin-system/';
 var session = require('express-session');
 
 export default class HttpSessions {
+    static pluginName: string = 'http-sessions'
+
     @Event
     @WaitOn('express:load')
     @WaitOn('cookie-parser:load')

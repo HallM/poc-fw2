@@ -9,6 +9,8 @@ import * as express from 'express';
 import { NotFoundError } from '../../errors/notfound';
 
 export default class ErrorRouter {
+    static pluginName: string = 'error-router'
+
     @Event
     @WaitOn('express:load')
     @Block('express:run')

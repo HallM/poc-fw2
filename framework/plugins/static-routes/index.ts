@@ -7,6 +7,8 @@ import { Event, WaitOn, Block } from '../../../plugin-system/';
 import * as express from 'express';
 
 export default class StaticRoutes {
+    static pluginName: string = 'static-routes'
+
     @Event
     @WaitOn('express:load')
     @WaitOn('express-compression:load')

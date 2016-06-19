@@ -7,6 +7,8 @@ import { Event, WaitOn, Block } from '../../../plugin-system/';
 var bodyParser = require('body-parser');
 
 export default class BodyParser {
+    static pluginName: string = 'body-parser'
+
     @Event
     @WaitOn('express:load')
     load(app) {

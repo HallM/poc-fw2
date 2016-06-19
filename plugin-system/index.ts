@@ -65,18 +65,15 @@ export class PluginManager {
         }
     }
 
-    addPlugin(name: string, plugin: any) {
+    addPlugin(PluginClass: any) {
         this.requirePhase(PmPhase.Discovery, 'Cannot add plugins once plugin discovery phase is complete.');
 
         // get all "events", aka functions and their names
         // the event name is {plugin name}:{fn name}
-
-        // const prototype = Object.getPrototypeOf(plugin);
+        const plugin: any = new PluginClass();
+        const name: string = PluginClass.pluginName;
 
         const events: string[] = Reflect.getMetadata(EventMetaKey, plugin) || [];
-        // const events: string[] = Object
-        //     .getOwnPropertyNames(prototype)
-        //     .filter(property => property !== 'constructor' && typeof prototype[property] == 'function');
 
         events.forEach(event => {
             const fn: Function = plugin[event];
@@ -135,7 +132,6 @@ export class PluginManager {
             }
 
             foundNodes.forEach(node => {
-                node.isVisited = true;
                 // remove the links to the foundNodes
                 const deps = node.getDependencies();
                 deps.forEach(dep => dep.removeDependent(node));

@@ -7,6 +7,8 @@ import { Event, WaitOn, Block } from '../../../plugin-system/';
 import * as express from 'express';
 
 export default class Express {
+    static pluginName: string = 'express'
+
     @Event
     load() {
         console.log('load express');

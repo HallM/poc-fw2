@@ -9,6 +9,8 @@ var consolidate = require('consolidate');
 var dustfork = require('../../../dust-fork');
 
 export default class ViewEngine {
+    static pluginName: string = 'view-engine'
+
     @Event
     @WaitOn('express:load')
     @Block('express-compression:load')

@@ -82,6 +82,8 @@ function determineUrl(filepath: string) {
 // }
 
 export default class RouteLoader {
+    static pluginName: string = 'route-loader'
+
     private router: express.Router
 
     private createPageRoutes(filepath: string, filefullpath: string) {

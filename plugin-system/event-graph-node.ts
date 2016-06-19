@@ -13,9 +13,7 @@ export class EventGraphNode {
     private executor: Function
     private target: any
 
-    isVisited: boolean
-
-    returnedValue: any
+    private returnedValue: any
 
     constructor(public eventName: string) {
         this.outwardLinks = [];
@@ -23,7 +21,6 @@ export class EventGraphNode {
         this.argumentNode = [];
         this.executor = null;
         this.target = null;
-        this.isVisited = false;
         this.returnedValue = undefined;
     }
 
@@ -33,15 +30,21 @@ export class EventGraphNode {
     }
 
     addArgument(node: EventGraphNode) {
-        this.argumentNode.splice(0, 0, node);
+        if (this.argumentNode.indexOf(node) === -1) {
+            this.argumentNode.splice(0, 0, node);
+        }
     }
 
     addDependentOn(node: EventGraphNode) {
-        this.inwardLinks.push(node);
+        if (this.inwardLinks.indexOf(node) === -1) {
+            this.inwardLinks.push(node);
+        }
     }
 
     addDependencyOf(node: EventGraphNode) {
-        this.outwardLinks.push(node);
+        if (this.outwardLinks.indexOf(node) === -1) {
+            this.outwardLinks.push(node);
+        }
     }
 
     removeDependent(node: EventGraphNode) {
@@ -78,7 +81,7 @@ export class EventGraphNode {
     }
 
     isLeaf(): boolean {
-        return this.outwardLinks.length === 0 || this.outwardLinks.every(node => node.isVisited);
+        return this.outwardLinks.length === 0;
     }
 
     toString(): string {
