@@ -1,4 +1,7 @@
-export = class DynComponent {
+import { PageUrl } from '../../../framework/decorators/page-url';
+
+@PageUrl('/dynamicPage')
+class DynComponent {
   get dynamicthing() {
     return new Promise(resolve => setTimeout(function() {
       resolve('lazy loading');
@@ -13,3 +16,5 @@ export = class DynComponent {
     }, 5000));
   }
 }
+
+export = DynComponent;

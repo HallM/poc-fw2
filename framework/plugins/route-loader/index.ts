@@ -30,8 +30,7 @@ function wrapPage(page: string) {
     };
 }
 
-function wrapDynamic(page: string) {
-    var ImplClass = require(path.resolve('server', page));
+function wrapDynamic(page: string, ImplClass: any) {
     return function(req: express.Request, res: express.Response) {
         var ctx = new ImplClass();
         dust.stream(page, ctx).pipe(res);
@@ -97,10 +96,9 @@ export default class RouteLoader {
 
         var fileNoExt = filepath.substring(0, extensionIndex);
 
-        var url = '/' + determineUrl(fileNoExt);
-
         var jsfile = fileNoExt + '.js';
         var jsfullpath = serverPages + path.sep + jsfile;
+        const guessedUrl = '/' + determineUrl(fileNoExt);
 
         // check if a js file exists
         var jsfstats = null;
@@ -112,15 +110,18 @@ export default class RouteLoader {
             jsfstats = null;
         }
 
-        // if (!jsfstats || !jsfstats.isFile()) {
-        //     console.log('static page', filepath, url);
-        //     this.router.get(url, wrapStatic('pages/' + filepath));
-        // } else {
-        //     console.log('dynamic page', filepath, url, jsfullpath);
-        //     this.router.get(url, wrapDynamic('pages/' + filepath, impl));
-        // }
-        console.log('create page', filepath, url);
-        this.router.get(url, wrapPage('pages/' + fileNoExt));
+        if (!jsfstats || !jsfstats.isFile()) {
+            console.log('static page', filepath, guessedUrl);
+            this.router.get(guessedUrl, wrapStatic('pages/' + filepath));
+        } else {
+            var ImplClass = require(path.resolve('server', 'pages', fileNoExt));
+            const url = ImplClass.pageUrl || guessedUrl;
+
+            console.log('dynamic page', filepath, url);
+            this.router.get(url, wrapDynamic('pages/' + filepath, ImplClass));
+        }
+        // console.log('create page', filepath, url);
+        // this.router.get(url, wrapPage('pages/' + fileNoExt));
     }
 
     private scanDirectory(dir: string, basedir: string, fn: Function) {
