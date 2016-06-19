@@ -10,20 +10,27 @@ import RouteLoader from "./plugins/route-loader/";
 import StaticRoutes from "./plugins/static-routes/";
 import ViewEngine from "./plugins/view-engine/";
 
+export default class Framework {
+    pluginManager: PluginManager
 
-const pm = new PluginManager();
+    constructor() {
+        this.pluginManager = new PluginManager();
 
-pm.addPlugin('body-parser', new BodyParser());
-pm.addPlugin('cookie-parser', new CookieParser());
-pm.addPlugin('error-router', new ErrorRouter());
-pm.addPlugin('express', new Express());
-pm.addPlugin('express-compression', new ExpressCompression());
-pm.addPlugin('http-sessions', new HttpSessions());
-pm.addPlugin('route-loader', new RouteLoader());
-pm.addPlugin('static-routes', new StaticRoutes());
-pm.addPlugin('view-engine', new ViewEngine());
+        this.pluginManager.addPlugin('body-parser', new BodyParser());
+        this.pluginManager.addPlugin('cookie-parser', new CookieParser());
+        this.pluginManager.addPlugin('error-router', new ErrorRouter());
+        this.pluginManager.addPlugin('express', new Express());
+        this.pluginManager.addPlugin('express-compression', new ExpressCompression());
+        this.pluginManager.addPlugin('http-sessions', new HttpSessions());
+        this.pluginManager.addPlugin('route-loader', new RouteLoader());
+        this.pluginManager.addPlugin('static-routes', new StaticRoutes());
+        this.pluginManager.addPlugin('view-engine', new ViewEngine());
+    }
 
-pm.determineOrder();
-pm.loadAll().then(() => {
-    console.log('all running');
-});
+    start() {
+        this.pluginManager.determineOrder();
+        this.pluginManager.loadAll().then(() => {
+            console.log('all running');
+        });
+    }
+}

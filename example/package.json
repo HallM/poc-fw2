@@ -2,8 +2,8 @@
   "name": "mhall-poc-example",
   "version": "0.1.0",
   "description": "Just a POC-example to show off the POC framework. Very POC.",
+  "main": "index.js",
   "scripts": {
-    "start": "node -e \"require('../framework/')\""
   },
   "author": "Matt Hall <mdhall@gmail.com>",
   "license": "MIT"
