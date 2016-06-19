@@ -879,14 +879,21 @@
   };
 
   Chunk.prototype.partial = function(elem, context, partialContext, params) {
+    // the very far tail of context gets carried over
+    // the tail is the IoC and req/res
+    var ctxTail = context.stack;
+    while (ctxTail.tail) {
+      ctxTail = ctxTail.tail;
+    }
+
     // isolate the partial into its own context
-    var isolatedContext = new Context(params, {}, {}, null, elem);
+    var isolatedContext = new Context(ctxTail, {}, {}, null, elem);
+    isolatedContext = isolatedContext.push(params);
     try {
       var Impl = dust.resolveImpl(elem);
       var ctx = new Impl();
       isolatedContext = isolatedContext.push(ctx);
     } catch(e) {
-      console.log(e);
     }
 
     if (dust.isTemplateFn(elem)) {

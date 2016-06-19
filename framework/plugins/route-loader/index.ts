@@ -20,26 +20,38 @@ var extension = '.dust';
 // TODO: figure out how to handle errors during page loading
 function wrapPage(page: string) {
     return function(req: express.Request, res: express.Response, next: express.NextFunction) {
-        var ctx = null;
+        const ctx = {req: req, res: res, ioc: null};
+        let localstack = dust.makeBase({});
+        localstack = localstack.push(ctx);
+
         try {
-            var ImplClass = require(path.resolve('server', page));
-            ctx = new ImplClass();
+            const ImplClass = require(path.resolve('server', page));
+            const data = new ImplClass();
+            localstack = localstack.push(data);
         } catch(e) {
         }
-        dust.stream(page, ctx).pipe(res);
+        dust.stream(page, localstack).pipe(res);
     };
 }
 
 function wrapDynamic(page: string, ImplClass: any) {
     return function(req: express.Request, res: express.Response) {
-        var ctx = new ImplClass();
-        dust.stream(page, ctx).pipe(res);
+        const data = new ImplClass();
+        const ctx = {req: req, res: res, ioc: null};
+        let localstack = dust.makeBase({});
+        localstack = localstack.push(ctx);
+        localstack = localstack.push(data);
+
+        dust.stream(page, localstack).pipe(res);
     };
 }
 
 function wrapStatic(page: string) {
     return function(req: express.Request, res: express.Response) {
-        dust.stream(page).pipe(res);
+        const ctx = {req: req, res: res, ioc: null};
+        let localstack = dust.makeBase({});
+        localstack = localstack.push(ctx);
+        dust.stream(page, localstack).pipe(res);
     };
 }
 
