@@ -14,9 +14,6 @@
     - needs the exec stack of events
   - loaded (can not do anything now)
 
-TODO:
-async plugins
-being able to return something and pass as a parameter
 */
 
 import { EventGraphNode } from './event-graph-node';

@@ -3,6 +3,7 @@
 'use strict';
 
 import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { serviceManager } from '../../';
 
 import * as express from 'express';
 
@@ -12,7 +13,9 @@ export default class Express {
     @Event
     load() {
         console.log('load express');
-        return express();
+        const app = express();
+        serviceManager.addService('express', app);
+        return app;
     }
 
     @Event

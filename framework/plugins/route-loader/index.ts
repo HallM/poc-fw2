@@ -3,6 +3,8 @@
 'use strict';
 
 import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { serviceManager } from '../../';
+import { InjectServiceMetaKey } from '../../../service-manager/';
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -16,17 +18,38 @@ var serverPages = path.resolve('server/pages/');
 var serverComponents = path.resolve('server/components/');
 var extension = '.dust';
 
+function makeServiceContext(req, res) {
+    const svc = serviceManager.makeRequestContext();
+    svc.addService('req', req);
+    svc.addService('res', res);
+    return svc;
+}
+
+function makeContext(svc) {
+    //: {req: express.Request, res: express.Request, svc: ServiceContext}
+    // const ctx = {req: req, res: res, svc: svc};
+    let localstack = dust.makeBase({});
+    localstack = localstack.push(svc);
+
+    return localstack;
+}
+
 // TODO: experimenting with lazy-loading, but specifically for dev time only
 // TODO: figure out how to handle errors during page loading
 function wrapPage(page: string) {
     return function(req: express.Request, res: express.Response, next: express.NextFunction) {
-        const ctx = {req: req, res: res, ioc: null};
-        let localstack = dust.makeBase({});
-        localstack = localstack.push(ctx);
+        const svc = makeServiceContext(req, res);
+        let localstack = makeContext(svc);
 
         try {
             const ImplClass = require(path.resolve('server', page));
             const data = new ImplClass();
+
+            const servicesToInject: any = Reflect.getOwnMetadata(InjectServiceMetaKey, data) || {};
+            for (let prop in servicesToInject) {
+                data[prop] = svc.getService(servicesToInject[prop]);
+            }
+
             localstack = localstack.push(data);
         } catch(e) {
         }
@@ -36,10 +59,15 @@ function wrapPage(page: string) {
 
 function wrapDynamic(page: string, ImplClass: any) {
     return function(req: express.Request, res: express.Response) {
+        const svc = makeServiceContext(req, res);
+        let localstack = makeContext(svc);
+
         const data = new ImplClass();
-        const ctx = {req: req, res: res, ioc: null};
-        let localstack = dust.makeBase({});
-        localstack = localstack.push(ctx);
+        const servicesToInject: any = Reflect.getMetadata(InjectServiceMetaKey, data) || {};
+        for (let prop in servicesToInject) {
+            data[prop] = svc.getService(servicesToInject[prop]);
+        }
+
         localstack = localstack.push(data);
 
         dust.stream(page, localstack).pipe(res);
@@ -48,9 +76,8 @@ function wrapDynamic(page: string, ImplClass: any) {
 
 function wrapStatic(page: string) {
     return function(req: express.Request, res: express.Response) {
-        const ctx = {req: req, res: res, ioc: null};
-        let localstack = dust.makeBase({});
-        localstack = localstack.push(ctx);
+        const svc = makeServiceContext(req, res);
+        let localstack = makeContext(svc);
         dust.stream(page, localstack).pipe(res);
     };
 }

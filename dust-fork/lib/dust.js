@@ -445,17 +445,19 @@
 
     if (typeof ctx === 'function') {
         // TODO: if there isn't one, that's an issue
-      var baseContext = this.getTail().head;
+      var svcContext = this.getTail().head;
+      var req = svcContext.getService('req');
+
       fn = function() {
         try {
           var params = Reflect.getMetadata(ReqParamMetaKey, ctxThis, down[down.length-1]) || [];
           params = params.map(function(p) {
             if (p.type === 'query') {
-              return baseContext.req.query[p.name];
+              return req.query[p.name];
             } else if (p.type === 'body') {
-              return baseContext.req.body[p.name];
+              return req.body[p.name];
             } else if (p.type === 'header') {
-              return baseContext.req.get(p.name);
+              return req.get(p.name);
             }
             return undefined;
           });

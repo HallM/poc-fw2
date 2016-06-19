@@ -4,8 +4,13 @@
 'use strict';
 
 import { PluginManager } from '../plugin-system/';
+import { ServiceManager } from '../service-manager/';
+
 import * as fs from 'fs';
 import * as path from 'path';
+
+// TODO: may need to make Framework a singleton as well
+export const serviceManager: ServiceManager = new ServiceManager();
 
 export default class Framework {
     pluginManager: PluginManager
