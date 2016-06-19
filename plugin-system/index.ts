@@ -32,10 +32,10 @@ enum PmPhase {
 }
 
 export class PluginManager {
-    phase: PmPhase
+    private phase: PmPhase
 
     // this becomes sorted in execution order when in Ready phase
-    graphNodes: EventGraphNode[]
+    private graphNodes: EventGraphNode[]
 
     constructor() {
         this.graphNodes = [];
