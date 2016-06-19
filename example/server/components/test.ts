@@ -1,5 +1,5 @@
 export = class TestComponent {
-  get test() {
+  test() {
     return 'something';
   }
 }

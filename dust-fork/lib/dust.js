@@ -7,6 +7,11 @@
     root.dust = factory();
   }
 }(this, function() {
+  // TODO: broken UMD
+  require('reflect-metadata');
+  // TODO: make this cleaner too
+  var ReqParamMetaKey = require('../../framework/decorators/req-param').ReqParamMetaKey;
+
   var dust = {
         "version": "2.7.2"
       },
@@ -366,6 +371,18 @@
     return this._get(cur, path);
   };
 
+  Context.prototype.getTail = function() {
+    var ctxTail = this.stack;
+    if (!ctxTail) {
+      return null;
+    }
+
+    while (ctxTail.tail) {
+      ctxTail = ctxTail.tail;
+    }
+    return ctxTail;
+  };
+
   /**
    * Get a value from the context
    * @method _get
@@ -427,9 +444,23 @@
     }
 
     if (typeof ctx === 'function') {
+        // TODO: if there isn't one, that's an issue
+      var baseContext = this.getTail().head;
       fn = function() {
         try {
-          return ctx.apply(ctxThis, arguments);
+          var params = Reflect.getMetadata(ReqParamMetaKey, ctxThis, down[down.length-1]) || [];
+          params = params.map(function(p) {
+            if (p.type === 'query') {
+              return baseContext.req.query[p.name];
+            } else if (p.type === 'body') {
+              return baseContext.req.body[p.name];
+            } else if (p.type === 'header') {
+              return baseContext.req.get(p.name);
+            }
+            return undefined;
+          });
+
+          return ctx.apply(ctxThis, params);
         } catch (err) {
           dust.log(err, ERROR);
           throw err;
@@ -881,10 +912,7 @@
   Chunk.prototype.partial = function(elem, context, partialContext, params) {
     // the very far tail of context gets carried over
     // the tail is the IoC and req/res
-    var ctxTail = context.stack;
-    while (ctxTail.tail) {
-      ctxTail = ctxTail.tail;
-    }
+    var ctxTail = context.getTail();
 
     // isolate the partial into its own context
     var isolatedContext = new Context(ctxTail, {}, {}, null, elem);

@@ -1,5 +1,5 @@
 export = class MattPage {
-    get thing() {
+    thing() {
         return 'THING'
     }
 }

@@ -37,5 +37,6 @@ jspm_packages
 .node_repl_history
 
 *.js
+!dust-fork/**/*.js
 typings
 rememberance

@@ -1,5 +1,5 @@
 export = class NewPage {
-  get something() {
+  something() {
     return 'something';
   }
 }
