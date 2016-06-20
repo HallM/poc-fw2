@@ -18,10 +18,28 @@ todo and future:
 - selecting the session store (probably some other things)
     - could do like try{} and attempt to load any available store
 
+- components
+    - ideally, asynchronous unlike React
+    - maybe use accessors (gets) to fetch data
+    - would need to know if the data has already been fetched or not
+    - data is looked for in a specific order:
+        - accessor
+        - prop
+        - strings file?
+        - are there others?
+    - localization may desire a different template for different languages
+    - idea: components can have multiple "renderables"
+        - the primary renderable
+        - an error renderable (could there be multiple error renderables?)
+        - loading renderable (used client side)
+
 - error views
     - method to specify certain behaviors during errors
     - components and streaming make this 10x worse...
       like how do you partial stream and then ERROR
+    - will want ability to share an error renderable between components
+    - may need a catch-all error renderable as well
+    - someone may want one for dev mode (with stack trace) and a different one for production
 
 - specifying actions?
     - are they specified at the component/page level?
@@ -190,17 +208,6 @@ fw.start();
         - config/*.js are loaded for plugins. `config.plugin = require('config/plugin.js');`
         - config/local/.. is loaded last to override things (this should be .gitignored)
 
-- components
-    - ideally, asynchronous unlike React
-    - maybe use accessors (gets) to fetch data
-    - would need to know if the data has already been fetched or not
-    - data is looked for in a specific order:
-        - accessor
-        - prop
-        - strings file?
-        - are there others?
-    - localization may desire a different template for different languages
-
 - loading component scripts
     - we have to load their existence to generate all the action URLs
 
@@ -232,6 +239,9 @@ fw.start();
     - turns out, dust supports fns and accessors that return promises. works great.
     - could disable dust's internal cache to get all calls to onload.
       we cache ourselves, but it allows us to load component scripts
+    - is it possible to alter the compiler to also generate a component graph?
+        - with this graph, we could generate the CSS, JS bundles
+    - could we rip out any script tags, componentize them, and then bundle them?
 
 - bunch of components for things like actionlink, pagelink, form
 
