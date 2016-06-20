@@ -18,67 +18,11 @@ var serverPages = path.resolve('server/pages/');
 var serverComponents = path.resolve('server/components/');
 var extension = '.dust';
 
-function makeServiceContext(req, res) {
-    const svc = serviceManager.makeRequestContext();
-    svc.addService('req', req);
-    svc.addService('res', res);
-    return svc;
-}
-
-function makeContext(svc) {
-    //: {req: express.Request, res: express.Request, svc: ServiceContext}
-    // const ctx = {req: req, res: res, svc: svc};
-    let localstack = dust.makeBase({});
-    localstack = localstack.push(svc);
-
-    return localstack;
-}
-
 // TODO: experimenting with lazy-loading, but specifically for dev time only
 // TODO: figure out how to handle errors during page loading
 function wrapPage(page: string) {
-    return function(req: express.Request, res: express.Response, next: express.NextFunction) {
-        const svc = makeServiceContext(req, res);
-        let localstack = makeContext(svc);
-
-        try {
-            const ImplClass = require(path.resolve('server', page));
-            const data = new ImplClass();
-
-            const servicesToInject: any = Reflect.getOwnMetadata(InjectServiceMetaKey, data) || {};
-            for (let prop in servicesToInject) {
-                data[prop] = svc.getService(servicesToInject[prop]);
-            }
-
-            localstack = localstack.push(data);
-        } catch(e) {
-        }
-        dust.stream(page, localstack).pipe(res);
-    };
-}
-
-function wrapDynamic(page: string, ImplClass: any) {
-    return function(req: express.Request, res: express.Response) {
-        const svc = makeServiceContext(req, res);
-        let localstack = makeContext(svc);
-
-        const data = new ImplClass();
-        const servicesToInject: any = Reflect.getMetadata(InjectServiceMetaKey, data) || {};
-        for (let prop in servicesToInject) {
-            data[prop] = svc.getService(servicesToInject[prop]);
-        }
-
-        localstack = localstack.push(data);
-
-        dust.stream(page, localstack).pipe(res);
-    };
-}
-
-function wrapStatic(page: string) {
-    return function(req: express.Request, res: express.Response) {
-        const svc = makeServiceContext(req, res);
-        let localstack = makeContext(svc);
-        dust.stream(page, localstack).pipe(res);
+    return function(req: express.Request, res: any, next: express.NextFunction) {
+        res.streamPage(page);
     };
 }
 
@@ -151,13 +95,13 @@ export default class RouteLoader {
 
         if (!jsfstats || !jsfstats.isFile()) {
             console.log('static page', filepath, guessedUrl);
-            this.router.get(guessedUrl, wrapStatic('pages/' + filepath));
+            this.router.get(guessedUrl, wrapPage('pages/' + fileNoExt));
         } else {
             var ImplClass = require(path.resolve('server', 'pages', fileNoExt));
             const url = ImplClass.pageUrl || guessedUrl;
 
             console.log('dynamic page', filepath, url);
-            this.router.get(url, wrapDynamic('pages/' + filepath, ImplClass));
+            this.router.get(url, wrapPage('pages/' + fileNoExt));
         }
         // console.log('create page', filepath, url);
         // this.router.get(url, wrapPage('pages/' + fileNoExt));

@@ -152,6 +152,10 @@
 
     var template = getTemplate(nameOrTemplate, dust.config.cache);
 
+    if (dust.onInitComponent) {
+      context = dust.onInitComponent((template ? template.templateName : nameOrTemplate), context);
+    }
+
     if (template) {
       return template(chunk, Context.wrap(context, template.templateName));
     } else {
@@ -919,12 +923,6 @@
     // isolate the partial into its own context
     var isolatedContext = new Context(ctxTail, {}, {}, null, elem);
     isolatedContext = isolatedContext.push(params);
-    try {
-      var Impl = dust.resolveImpl(elem);
-      var ctx = new Impl();
-      isolatedContext = isolatedContext.push(ctx);
-    } catch(e) {
-    }
 
     if (dust.isTemplateFn(elem)) {
       // The eventual result of evaluating `elem` is a partial name
