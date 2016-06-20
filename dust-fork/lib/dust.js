@@ -545,6 +545,13 @@
         newBlocks;
 
     if (locals) {
+      // Hack to get specific contexts in a block
+      for (var p in locals) {
+        if (!locals[p].ctx) {
+          locals[p].ctx = this;
+        }
+      }
+
       if (!blocks) {
         newBlocks = [locals];
       } else {
@@ -907,10 +914,14 @@
   };
 
   Chunk.prototype.block = function(elem, context, bodies) {
+    var ctx = context;
+    if (elem && elem.ctx) {
+      ctx = elem.ctx;
+    }
     var body = elem || bodies.block;
 
     if (body) {
-      return body(this, context);
+      return body(this, ctx);
     }
     return this;
   };
@@ -921,18 +932,25 @@
     var ctxTail = context.getTail();
 
     // isolate the partial into its own context
-    var isolatedContext = new Context(ctxTail, {}, {}, null, elem);
+    var isolatedContext = new Context(
+      ctxTail,
+      partialContext.global,
+      partialContext.options,
+      // null,
+      partialContext.blocks,
+      elem
+    );
     isolatedContext = isolatedContext.push(params);
 
     if (dust.isTemplateFn(elem)) {
       // The eventual result of evaluating `elem` is a partial name
       // Load the partial after getting its name and end the async chunk
       return this.capture(elem, context, function(name, chunk) {
-        partialContext.templateName = name;
+        isolatedContext.templateName = name;
         load(name, chunk, isolatedContext).end();
       });
     } else {
-      partialContext.templateName = elem;
+      isolatedContext.templateName = elem;
       return load(elem, this, isolatedContext);
     }
   };

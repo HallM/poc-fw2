@@ -1,17 +1,9 @@
-<html>
-  <head>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Raleway|Roboto" rel="stylesheet">
+{>"components/layout" /}
 
-    <style>
-      body {
-        font-family: 'Open Sans', sans-serif;
-      }
-    </style>
-  </head>
-  <body>
+{<title}Dynamic and Streaming page{/title}
+{<maincontent}
     Hello {dynamicthing}<br>
     Let's repeat: {dynamicthing}<br>
     Maybe a: {>"components/test" param="something" /}
     test: {afunction}<br>
-  </body>
-</html>
+{/maincontent}

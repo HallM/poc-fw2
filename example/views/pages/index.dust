@@ -1,5 +1,5 @@
-<html>
-  <body>
-    This is the index page
-  </body>
-</html>
+{>"components/layout" /}
+
+{<maincontent}
+This is the index page
+{/maincontent}
