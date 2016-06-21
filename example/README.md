@@ -1,11 +1,8 @@
 # Example POC
 
-Requires TypeScript and Node 6.x
+Requires TypeScript and Node 4.x or higher
 
-Getting typescript:
-```sh
-$ npm install -g typescript
-```
+Please follow the README in the parent directory first to have everything installed.
 
 To build ts into js files before running:
 ```sh
@@ -14,5 +11,6 @@ $ tsc
 
 To run:
 ```sh
-$ npm start
+$ node .
 ```
+
