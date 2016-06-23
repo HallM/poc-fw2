@@ -65,6 +65,14 @@ Questions:
 * Is there a view-model on client side?
     * Is it different than the one on server?
     * Could different view models share code?
+* Shorter ending tags to make some things easier/cleaner?
+* referencing a block from view-model? is there a case helpers can't handle?
+    * it may have something for ajax, maybe something about logic... but helpers could do that
+    * Need to remember the use-case I thought of...
+* Is there a case for logic-capable when viewmodels are a thing?
+    * Less-logic `{?.}`, `{#.}`, `{^.}` is a must
+    * Full logic may complicate
+    * Don't want a React where it feels like JS should be there, but then not.
 
 ```
 Maybe for the service manager, have some sort of special "context" that represents a request.
@@ -130,6 +138,7 @@ could it also allow a foreach myarray as value style?
     {/#}
 
 though, Dust exposes $idx, $len as the variables
+let's expose the $idx and $len variables, but use blocks as lambdas to pull it off
 
 chould this also be a for-in iterating over props?
 {:else}
