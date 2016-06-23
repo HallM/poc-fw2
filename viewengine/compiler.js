@@ -1,9 +1,9 @@
 'use strict';
 
 const sample = `
-{:percol
+{def percol {:
   <td>value at row {i} col {j} is {item}</td>
-}
+}}
 
 <table>
 {#rows {+ {:
@@ -76,6 +76,8 @@ each -> adds an if check on a value from varaccess(v)
         else, if there's an "else" body defined, run that
 helper -> runs the helper function with params & bodies
 component -> calls that component with params & bodies
+
+for both helper and component, need to make sure each body has a different name
 
 things that should be handled by something else:
 literal

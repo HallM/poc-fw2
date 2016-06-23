@@ -93,6 +93,7 @@ statement
     = Comment
     / Raw
     / Body
+    / Def
     / Call
     / VariableUse
     / Exist
@@ -126,15 +127,20 @@ Raw
     = rawopen r:(!rawclose c:. {return c})* rawclose
     { return withPosition(['raw', r]); }
 
-bodysigil = "def" / ":"
+bodysigil = ":"
 Body
-    = opentag bodysigil ws* i:identifier? ws* b:block ws* closetag
-    { return withPosition(['body', i, b]); }
+    = opentag bodysigil ws* b:block ws* closetag
+    { return withPosition(['body', b]); }
+
+defsigil = "def"
+Def
+    = opentag defsigil ws* i:identifier ws* b:statement ws* closetag
+    { return withPosition(['def', i, b]); }
 
 callsigil = "call" / "+"
 Call
-    = opentag callsigil ws* i:identifier? ws* b:Body? ws* p:paramAssignment* ws* closetag
-    { return withPosition(['call', i, b, p]); }
+    = opentag callsigil ws* i:(identifier / Body) ws* p:paramAssignment* ws* closetag
+    { return withPosition(['call', i, p]); }
 
 existsigil = "if" / "?"
 Exist
