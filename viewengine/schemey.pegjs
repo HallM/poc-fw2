@@ -11,7 +11,7 @@ start
     = block
 
 block
-    = s:(expression / buffer)*
+    = s:(expression / buffer / Comment)*
     { return withPosition(['block', s]); }
 
 eol
@@ -32,10 +32,10 @@ closetag
 
 string
     = '"' s:(!'"' !eol c:. {return c})* '"'
-    { return ['literal', s.join('')]; }
+    { return s.join(''); }
 
 number
-    = n:(float / integer) { return ['literal', n]; }
+    = n:(float / integer) { return n; }
 
 float
     = l:integer "." r:unsigned_integer { return parseFloat(l + "." + r); }
@@ -50,8 +50,8 @@ integer
     = signed_integer / unsigned_integer
 
 literal
-    = string
-    / number
+    = l:(string / number)
+    { return ['literal', [l]]; }
 
 key
     = s:[a-zA-Z$_] c:[a-zA-Z0-9$_]*
@@ -65,18 +65,25 @@ identifier
     = c:(c:ctx ":" { return c; })? i:key
     { return withPosition(['identifier', [c || '', i]]); }
 
-param
-    = k:key "=" v:expression
-    { return withPosition(['param', [k, v]]); }
+// param
+//     = k:key "=" v:expression
+//     { return withPosition([k, v]); }
+// paramset
+//     = s:(p:param filler { return p; })*
+//     { return ['paramset', s]; }
+
+paramlist
+    = "(" filler p:(k:key filler { return k; })* filler ")"
+    { return p; }
 paramset
-    = s:(p:param ws* { return p; })*
-    { return s; }
+    = p:(e:expression filler { return e; })*
+    { return p; }
 
 buffer
     = e:eol w:ws*
-    { return ["format", e, w.join('')]; }
+    { return ["format", [e + w.join('')]]; }
     / b:(!Comment !opentag !closetag !eol c:. {return c})+
-    { return ["buffer", b.join('')]; }
+    { return ["buffer", [b.join('')]]; }
 
 escapekeys
     = "s"
@@ -86,15 +93,19 @@ escapekeys
     / "rb"
 escapes
     = opentag "~" k:escapekeys closetag
-    { return ['escape', k]; }
+    { return ['escape', [k]]; }
 
 commentopen
     = opentag "!"
 commentclose
     = "!" closetag
 Comment
-    = commentopen v:(!commentclose c:. {return c})* commentclose
-    { return withPosition(['comment', v]); }
+    = commentopen (!commentclose .)* commentclose
+//    = commentopen (!commentclose c:. {return c})* commentclose
+//    { return withPosition(['comment', [v.join('')]]); }
+
+filler
+    = (ws / Comment)*
 
 rawopen
     = opentag "`"
@@ -102,49 +113,52 @@ rawclose
     = "`" closetag
 Raw
     = rawopen r:(!rawclose c:. {return c})* rawclose
-    { return withPosition(['raw', r]); }
+    { return withPosition(['raw', [r.join('')]]); }
 
 Body
-    = opentag ws* "begin" ws* b:block ws* closetag
-    { return withPosition(['body', b]); }
+    = opentag filler "body" filler p:(l:paramlist filler { return l; })? b:block filler closetag
+    { return withPosition(['body', [p, b]]); }
 
-filter
-    = "|" ws* f:identifier
-    { return withPosition(['filter', f]); }
+//filter
+//    = "|" filler f:identifier
+//    { return withPosition(['filter', [f]]); }
 
 Get
-    = opentag ws* e:expression ws* f:filter* ws* closetag
-    { return withPosition(['get', [e, f]]); }
+    = opentag filler e:expression filler closetag
+    { return withPosition(['get', [e]]); }
 
 Call
-    = opentag ws* c:callable ws* p:paramset ws* closetag
+    = opentag filler c:callable filler p:paramset filler closetag
     { return withPosition(['call', [c, p]]); }
 
-Flow
-    = opentag ws* f:internalflow ws* e:expression ws* t:expression f:expression? ws* closetag
-    { return withPosition(['flow', [f, e, [t, f]]]); }
+Array
+    = "(" filler a:(e:expression filler { return e; })* filler ")"
+    { return withPosition(['array', [a]]); }
+
+Empty
+    = opentag closetag
+    { return ['empty', []]; }
 
 expression
     = Body
     / Get
     / Call
-    / Flow
     / Raw
     / escapes
     / identifier
     / literal
+    / Array
+    / Empty
 
 internalfunction
-    = "helper"
-    / "insert"
-    / "define"
+    = k:("helper"
+        / "insert"
+        / "define"
+        / "each"
+        / "if")
+    { return ['internal', [k]]; }
 
 callable
     = Body
     / internalfunction
     / identifier
-
-internalflow
-    = "each"
-    / "if"
-    / "ifnot"
