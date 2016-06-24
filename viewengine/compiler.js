@@ -51,31 +51,32 @@ else={"No rows to show"}}
 
 /**/
 const sample = `
-{define (percol) ({body (tag i j item)
-  {if j {} {body
-    <!-- this is the not the first column  -->
-  }}
-  <{tag}>value at row {i} col {j} is {item}</{tag}>
-})}
-
+{{body (percol)
 <table>
 {{body (rows)
-{each rows {{body (i cols)
+{each rows {body (cols i)
     <tr>
-      {if i {body
+      {if i {} {body
         <!-- this is the first row  -->
       }}
-      {each cols
-        {percol "td" i idx {body
+      {each cols {body (item j)
+        {percol "td" i j {body
           {! item is the default var name for the each !}
           <span>{item}</span>
-        }}
+        }
+      }}
       }
-    </td>
-  } idx item}
+    </tr>
+  }
 "No rows to show"}
 } ((1 2) (3 4) (5 6))}
 </table>
+} {body (tag i j item)
+  {if j {body
+    <!-- this is the not the first column  -->
+  }}
+  <{tag}>value at row {i} col {j} is {item}</{tag}>
+}}
 `;
 /**/
 
@@ -167,12 +168,22 @@ function processblock(b) {
   // could be format, buffer, null(comment), or expression
   console.log('block');
   var output = '';
-  b.forEach(function(e) {
+
+  var bLen = b.length;
+  var prevBuff = '';
+
+  b.forEach(function(e, indx) {
     var type = e[0];
     if (!type) {
       output += '';
-    } if (type === 'format' || type === 'buffer') {
-      output += 'chunk.w(' + e[1] + ');';
+    } else if (type === 'format' || type === 'buffer') {
+      // do a look ahead
+      prevBuff += e[1];
+      if (indx+1 < bLen && (b[indx+1][0] === 'format' || b[indx+1][0] === 'buffer')) {
+      } else {
+        output += '.w("' + prevBuff + '")';
+        prevBuff = '';
+      }
     } else {
       output += processexp(e);
     }
@@ -224,7 +235,7 @@ function processcallable(c) {
 }
 
 function processinternal(v) {
-  return v[0];
+  return 'internal.' + v[0];
 }
 
 function processidentifier(v) {
@@ -236,7 +247,7 @@ function processidentifier(v) {
     throw new Error('contexts not supported yet');
   }
 
-  return (ctx ? (ctx + ':') : '') + name;
+  return name;
 }
 function processliteral(v) {
   return v[0];
@@ -244,17 +255,16 @@ function processliteral(v) {
 function processarray(v) {
   console.log('array');
   var arr = v[0];
-  var output = '(';
-  arr.forEach(function(e) {
-    output += processexp(e);
-    output += ' ';
-  });
-  output += ')';
+  var output = '[';
+  output += arr.map(function(e) {
+     return processexp(e);
+  }).join(',');
+  output += ']';
 
   return output;
 }
 function processempty() {
-  return '{}';
+  return 'null';
 }
 
   function processbody(v) {
@@ -266,51 +276,55 @@ function processempty() {
       // something went wrong
     }
 
-    var output = '{body ';
+    var output = '(function($c';
     if (params) {
-      output += '(';
-      params.forEach(function(p) {
-        output += p + ' ';
-      });
-      output += ') ';
+      output += ',';
+      output += params.map(function(p) {
+        return p;
+      }).join(',');
     }
+    output += ') {return $c'
 
     if (!block || block[0] !== 'block' || !block[1]) {
       throw new Error('Invalid block in a body');
     }
 
     output += processblock(block[1]);
-    output += '}';
+    output += '})';
     return output;
   }
 
   function processget(v) {
     console.log('get');
-    return '{' + processexp(v[0]) + '}';
+    var e = processexp(v[0]);
+    // return e + ' instanceof Function ? ' + e + '() : .w(' + e + ')\n';
+    return '.w(' + e + ')';
   }
 
   function processcall(v) {
     console.log('call');
     var callable = processcallable(v[0]);
     var params = v[1] || null;
-    var output = '{' + callable + ' ';
+    var output = '.w(' + callable + '($c';
 
     if (params) {
-      params.forEach(function(p) {
-        output += processexp(p) + ' ';
-      });
+      output += ',';
+      output += params.map(function(p) {
+        return processexp(p);
+      }).join(',');
     }
 
-    output += '}';
+    output += '))';
     return output;
   }
 
   function processraw(v) {
-    return '{' + v[0] + '}';
+    return '.w(' + v[0] + ')';
   }
 
   function processescape(v) {
-    return '{~' + v[0] + '}';
+    // TODO:
+    return '.w(~' + v[0] + ')';
   }
 
 var ast = parser(sample);
@@ -320,7 +334,8 @@ var ast = parser(sample);
 if (ast[0] !== 'block') {
   console.log('then thats a fail');
 } else {
-  console.log(processblock(ast[1]));
+  var code = 'var template =(function($c) {return $c' + processblock(ast[1]) + '});';
+  console.log(code);
 }
 
 // if we can transform it back into the original, then we are doing pretty good

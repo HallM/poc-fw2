@@ -57,7 +57,7 @@ module.exports = (function() {
         peg$c18 = { type: "literal", value: "\"", description: "\"\\\"\"" },
         peg$c19 = { type: "any", description: "any character" },
         peg$c20 = function(c) {return c},
-        peg$c21 = function(s) { return s.join(''); },
+        peg$c21 = function(s) { return '"' + s.join('') + '"'; },
         peg$c22 = function(n) { return n; },
         peg$c23 = ".",
         peg$c24 = { type: "literal", value: ".", description: "\".\"" },
@@ -89,7 +89,7 @@ module.exports = (function() {
         peg$c50 = { type: "literal", value: ")", description: "\")\"" },
         peg$c51 = function(p) { return p; },
         peg$c52 = function(e) { return e; },
-        peg$c53 = function(e, w) { return ["format", e, [w.join('')]]; },
+        peg$c53 = function(e, w) { return ["format", ['\\n' + w.join('')]]; },
         peg$c54 = function(b) { return ["buffer", [b.join('')]]; },
         peg$c55 = "s",
         peg$c56 = { type: "literal", value: "s", description: "\"s\"" },
@@ -327,7 +327,7 @@ module.exports = (function() {
 
       s0 = peg$currPos;
       s1 = [];
-      s2 = peg$parseexpression();
+      s2 = peg$parseTag();
       if (s2 === peg$FAILED) {
         s2 = peg$parsebuffer();
         if (s2 === peg$FAILED) {
@@ -336,7 +336,7 @@ module.exports = (function() {
       }
       while (s2 !== peg$FAILED) {
         s1.push(s2);
-        s2 = peg$parseexpression();
+        s2 = peg$parseTag();
         if (s2 === peg$FAILED) {
           s2 = peg$parsebuffer();
           if (s2 === peg$FAILED) {
@@ -1907,7 +1907,7 @@ module.exports = (function() {
       return s0;
     }
 
-    function peg$parseexpression() {
+    function peg$parseTag() {
       var s0;
 
       s0 = peg$parseBody();
@@ -1920,18 +1920,26 @@ module.exports = (function() {
             if (s0 === peg$FAILED) {
               s0 = peg$parseescapes();
               if (s0 === peg$FAILED) {
-                s0 = peg$parseidentifier();
-                if (s0 === peg$FAILED) {
-                  s0 = peg$parseliteral();
-                  if (s0 === peg$FAILED) {
-                    s0 = peg$parseArray();
-                    if (s0 === peg$FAILED) {
-                      s0 = peg$parseEmpty();
-                    }
-                  }
-                }
+                s0 = peg$parseEmpty();
               }
             }
+          }
+        }
+      }
+
+      return s0;
+    }
+
+    function peg$parseexpression() {
+      var s0;
+
+      s0 = peg$parseTag();
+      if (s0 === peg$FAILED) {
+        s0 = peg$parseidentifier();
+        if (s0 === peg$FAILED) {
+          s0 = peg$parseliteral();
+          if (s0 === peg$FAILED) {
+            s0 = peg$parseArray();
           }
         }
       }

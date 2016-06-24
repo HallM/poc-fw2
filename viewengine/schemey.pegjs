@@ -11,7 +11,7 @@ start
     = block
 
 block
-    = s:(expression / buffer / Comment)*
+    = s:(Tag / buffer / Comment)*
     { return withPosition(['block', s]); }
 
 eol
@@ -32,7 +32,7 @@ closetag
 
 string
     = '"' s:(!'"' !eol c:. {return c})* '"'
-    { return s.join(''); }
+    { return '"' + s.join('') + '"'; }
 
 number
     = n:(float / integer) { return n; }
@@ -81,7 +81,7 @@ paramset
 
 buffer
     = e:eol w:ws*
-    { return ["format", [e + w.join('')]]; }
+    { return ["format", ['\\n' + w.join('')]]; }
     / b:(!Comment !opentag !closetag !eol c:. {return c})+
     { return ["buffer", [b.join('')]]; }
 
@@ -139,16 +139,18 @@ Empty
     = opentag closetag
     { return ['empty', []]; }
 
-expression
+Tag
     = Body
     / Get
     / Call
     / Raw
     / escapes
+    / Empty
+expression
+    = Tag
     / identifier
     / literal
     / Array
-    / Empty
 
 internalfunction
     = k:("helper"
