@@ -54,8 +54,11 @@ const sample = `
 {{body (percol)
 <table>
 {{body (rows)
-{each rows {body (cols i)
+{each v:testarray {body (cols i)
     <tr>
+      {if v:testcond {body
+        <td>this should show up!</td>
+      }}
       {if i {} {body
         <!-- this is the first row  -->
       }}
@@ -71,6 +74,8 @@ const sample = `
 "No rows to show"}
 } ((1 2) (3 4) (5 6))}
 </table>
+{v:test}
+{v:value}
 } {body (tag i j item)
   {if j {body
     <!-- this is the not the first column  -->
@@ -235,7 +240,7 @@ function processcallable(c) {
 }
 
 function processinternal(v) {
-  return 'internal.' + v[0];
+  return '$i.' + v[0];
 }
 
 function processidentifier(v) {
@@ -244,7 +249,7 @@ function processidentifier(v) {
   var name = v.shift();
 
   if (ctx) {
-    throw new Error('contexts not supported yet');
+    return '$' + ctx + '.' + name;
   }
 
   return name;
@@ -283,7 +288,7 @@ function processempty() {
         return p;
       }).join(',');
     }
-    output += ') {return $c'
+    output += '){return $c'
 
     if (!block || block[0] !== 'block' || !block[1]) {
       throw new Error('Invalid block in a body');
@@ -334,7 +339,7 @@ var ast = parser(sample);
 if (ast[0] !== 'block') {
   console.log('then thats a fail');
 } else {
-  var code = 'var template =(function($c) {return $c' + processblock(ast[1]) + '});';
+  var code = 'var template=(function($c,$v,$h,$i){return $c' + processblock(ast[1]) + '});';
   console.log(code);
 }
 

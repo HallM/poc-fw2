@@ -121,13 +121,11 @@ module.exports = (function() {
         peg$c82 = { type: "literal", value: "helper", description: "\"helper\"" },
         peg$c83 = "insert",
         peg$c84 = { type: "literal", value: "insert", description: "\"insert\"" },
-        peg$c85 = "define",
-        peg$c86 = { type: "literal", value: "define", description: "\"define\"" },
-        peg$c87 = "each",
-        peg$c88 = { type: "literal", value: "each", description: "\"each\"" },
-        peg$c89 = "if",
-        peg$c90 = { type: "literal", value: "if", description: "\"if\"" },
-        peg$c91 = function(k) { return ['internal', [k]]; },
+        peg$c85 = "each",
+        peg$c86 = { type: "literal", value: "each", description: "\"each\"" },
+        peg$c87 = "if",
+        peg$c88 = { type: "literal", value: "if", description: "\"if\"" },
+        peg$c89 = function(k) { return ['internal', [k]]; },
 
         peg$currPos          = 0,
         peg$savedPos         = 0,
@@ -1967,36 +1965,27 @@ module.exports = (function() {
           if (peg$silentFails === 0) { peg$fail(peg$c84); }
         }
         if (s1 === peg$FAILED) {
-          if (input.substr(peg$currPos, 6) === peg$c85) {
+          if (input.substr(peg$currPos, 4) === peg$c85) {
             s1 = peg$c85;
-            peg$currPos += 6;
+            peg$currPos += 4;
           } else {
             s1 = peg$FAILED;
             if (peg$silentFails === 0) { peg$fail(peg$c86); }
           }
           if (s1 === peg$FAILED) {
-            if (input.substr(peg$currPos, 4) === peg$c87) {
+            if (input.substr(peg$currPos, 2) === peg$c87) {
               s1 = peg$c87;
-              peg$currPos += 4;
+              peg$currPos += 2;
             } else {
               s1 = peg$FAILED;
               if (peg$silentFails === 0) { peg$fail(peg$c88); }
-            }
-            if (s1 === peg$FAILED) {
-              if (input.substr(peg$currPos, 2) === peg$c89) {
-                s1 = peg$c89;
-                peg$currPos += 2;
-              } else {
-                s1 = peg$FAILED;
-                if (peg$silentFails === 0) { peg$fail(peg$c90); }
-              }
             }
           }
         }
       }
       if (s1 !== peg$FAILED) {
         peg$savedPos = s0;
-        s1 = peg$c91(s1);
+        s1 = peg$c89(s1);
       }
       s0 = s1;
 

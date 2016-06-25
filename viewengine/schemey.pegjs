@@ -155,7 +155,6 @@ expression
 internalfunction
     = k:("helper"
         / "insert"
-        / "define"
         / "each"
         / "if")
     { return ['internal', [k]]; }
