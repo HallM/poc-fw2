@@ -109,9 +109,9 @@ Raw
     = rawopen r:(!rawclose c:. {return c})* rawclose
     { return withPosition(['raw', [r.join('')]]); }
 
-Body
-    = opentag filler "body" filler p:(l:paramlist filler { return l; })? b:block filler closetag
-    { return withPosition(['body', [p, b]]); }
+FnCreate
+    = opentag filler "fn" filler p:(l:paramlist filler { return l; })? b:block filler closetag
+    { return withPosition(['fn', [p, b]]); }
 
 Call
     = opentag filler s:"!"? c:callable filler p:paramset filler closetag
@@ -126,7 +126,7 @@ Empty
     { return ['empty', []]; }
 
 Tag
-    = Body
+    = FnCreate
     / Call
     / Raw
     / escapes
@@ -139,7 +139,7 @@ expression
 
 internalfunction
     = k:("helper"
-        / "insert"
+        / "include"
         / "each"
         / "if")
     { return ['internal', [k]]; }
@@ -167,7 +167,7 @@ mathators
     { return ['internal', [c]]; }
 
 callable
-    = Body
+    = FnCreate
     / internalfunction
     / identifier
     / comparators

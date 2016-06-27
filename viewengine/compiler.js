@@ -83,8 +83,8 @@ function processexp(e) {
   var type = e[0];
   if (!type) {
     throw new Error('uhhh, fail no type ' + e);
-  } if (type === 'body') {
-    return processbody(e[1]);
+  } if (type === 'fn') {
+    return processfn(e[1]);
   } else if (type === 'call') {
     return processcall(e[1]);
   } else if (type === 'raw') {
@@ -142,8 +142,8 @@ function processempty() {
   return 'null';
 }
 
-  function processbody(v) {
-    // console.log('body');
+  function processfn(v) {
+    // console.log('fn');
     var params = v.length === 2 ? v.shift() : null;
     var block = v.shift();
 
@@ -156,7 +156,7 @@ function processempty() {
     output += ') {\nvar $c = new Chunk();\n'
 
     if (!block || block[0] !== 'block' || !block[1]) {
-      throw new Error('Invalid block in a body');
+      throw new Error('Invalid block in a function');
     }
 
     output += processblock(block[1]);
@@ -172,9 +172,9 @@ function processempty() {
     var type = v[0][0];
     if (!type) {
       throw new Error('no callable type ' + v[0]);
-    } if (type === 'body') {
+    } if (type === 'fn') {
       needsProtection = false;
-      callable = processbody(v[0][1]);
+      callable = processfn(v[0][1]);
     } else if (type === 'identifier') {
       callable = processidentifier(v[0][1]);
     } else if (type === 'internal') {
@@ -245,6 +245,6 @@ module.exports = function(src) {
     return '$i_' + item + '= $i.' + item;
   }).join(',\n') + ';\n\n';
 
-  var code = 'function(Chunk,$v,$h,$i) {var $c = new Chunk();\n' + internals + compiled + '\nreturn $c.getOutput();\n}\n';
+  var code = 'function($L,Chunk,$p,$i) {var $h=$L.helpers;\nvar $c = new Chunk();\n' + internals + compiled + '\nreturn $c.getOutput();\n}\n';
   return code;
 }
