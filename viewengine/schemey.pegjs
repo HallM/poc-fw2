@@ -53,9 +53,12 @@ literal
     = l:(string / number)
     { return ['literal', [l]]; }
 
-key
+keypart
     = s:[a-zA-Z$_] c:[a-zA-Z0-9$_]*
     { return s + c.join(''); }
+key
+    = f:keypart r:("." p:keypart { return p; })*
+    { return r ? [f].concat(r).join('.') : f; }
 
 ctx
     = s:[a-zA-Z] c:[a-zA-Z0-9_]*
@@ -64,13 +67,6 @@ ctx
 identifier
     = c:(c:ctx ":" { return c; })? i:key
     { return withPosition(['identifier', [c || '', i]]); }
-
-// param
-//     = k:key "=" v:expression
-//     { return withPosition([k, v]); }
-// paramset
-//     = s:(p:param filler { return p; })*
-//     { return ['paramset', s]; }
 
 paramlist
     = "(" filler p:(k:key filler { return k; })* filler ")"
@@ -96,13 +92,11 @@ escapes
     { return ['escape', [k]]; }
 
 commentopen
-    = opentag "!"
+    = opentag "*"
 commentclose
-    = "!" closetag
+    = "*" closetag
 Comment
     = commentopen (!commentclose .)* commentclose
-//    = commentopen (!commentclose c:. {return c})* commentclose
-//    { return withPosition(['comment', [v.join('')]]); }
 
 filler
     = (ws / Comment)*
@@ -119,20 +113,12 @@ Body
     = opentag filler "body" filler p:(l:paramlist filler { return l; })? b:block filler closetag
     { return withPosition(['body', [p, b]]); }
 
-//filter
-//    = "|" filler f:identifier
-//    { return withPosition(['filter', [f]]); }
-
-Get
-    = opentag filler e:expression filler closetag
-    { return withPosition(['get', [e]]); }
-
 Call
-    = opentag filler c:callable filler p:paramset filler closetag
-    { return withPosition(['call', [c, p]]); }
+    = opentag filler s:"!"? c:callable filler p:paramset filler closetag
+    { return withPosition(['call', [c, p, !!s]]); }
 
 Array
-    = "(" filler a:(e:expression filler { return e; })* filler ")"
+    = "[" filler a:(e:expression filler { return e; })* filler "]"
     { return withPosition(['array', [a]]); }
 
 Empty
@@ -141,7 +127,6 @@ Empty
 
 Tag
     = Body
-    / Get
     / Call
     / Raw
     / escapes
@@ -159,7 +144,31 @@ internalfunction
         / "if")
     { return ['internal', [k]]; }
 
+comparators
+    = c:(
+        "==" {return 'eq'; }
+      / "!=" {return 'neq'; }
+      / "<" {return 'lt'; }
+      / ">" {return 'gt'; }
+      / "<=" {return 'lte'; }
+      / ">=" {return 'gte'; }
+      / "&&" {return 'cmpand'; }
+      / "||" {return 'cmpor'; }
+    )
+    { return ['internal', [c]]; }
+mathators
+    = c:(
+        "+" {return 'add'; }
+      / "-" {return 'sub'; }
+      / "*" {return 'mul'; }
+      / "/" {return 'div'; }
+      / "%" {return 'mod'; }
+    )
+    { return ['internal', [c]]; }
+
 callable
     = Body
     / internalfunction
     / identifier
+    / comparators
+    / mathators
