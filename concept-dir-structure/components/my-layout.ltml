@@ -1,0 +1,16 @@
+<html>
+<head>
+<title>{strings::sitetitle}</title>
+</head>
+<body>
+
+{include "components/my-component"}
+
+<div>
+{data::content}
+</div>
+
+{include "components/subdir/another-component"}
+
+</body>
+</html>

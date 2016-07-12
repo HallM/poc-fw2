@@ -10,8 +10,7 @@ import * as express from 'express';
 import { serviceManager } from '../../';
 import { InjectServiceMetaKey } from '../../../service-manager/';
 
-var consolidate = require('consolidate');
-var dust = require('../../../dust-fork');
+var expressLisplate = require('express-lisplate');
 
 export default class ViewEngine {
     static pluginName: string = 'view-engine'
@@ -21,59 +20,42 @@ export default class ViewEngine {
     @Block('express-compression:load')
     load(app) {
         console.log('load view engine');
-        dust.resolveImpl = function(elem) {
-            return require(path.resolve('server', elem));
-        }
-        dust.onInitComponent = function(pagename, context) {
-            try {
-                const ImplClass = require(path.resolve('server', pagename));
-                const data = new ImplClass();
 
-                var svc = context.getTail().head;
+        const ext = 'ltml';
+        const viewDir = '';
 
-                const servicesToInject: any = Reflect.getMetadata(InjectServiceMetaKey, data) || {};
-                for (let prop in servicesToInject) {
-                    data[prop] = svc.getService(servicesToInject[prop]);
+        app.engine(ext, expressLisplate({
+            viewModelDirectory: function(templateName) {
+                var modelpath = path.resolve(templateName + '.js');
+                var viewmodel = null;
+                try {
+                    viewmodel = require(modelpath);
+                } catch(e) {
                 }
 
-                context = context.push(data);
-            } catch(e) {
-            }
+                // TODO: do injections
 
-            return context;
-        };
+                return viewmodel;
+            },
 
-        consolidate.requires.dust = dust;
-
-        const ext = 'dust';
-        const viewDir = 'views';
-
-        app.engine('dust', consolidate.dust);
+             stringsDirectory: ''
+        }));
         app.set('view engine', ext);
         app.set('views', viewDir);
-        // just pre-loading dustjs
-        try {
-            consolidate.dust.render('index', {
-                ext: ext,
-                views: viewDir,
-                cache: false
-            }, function() {});
-        } catch(e) {
-        }
 
-        app.use(function(req: express.Request, res: any, next: express.NextFunction) {
-            res.streamPage = function(page) {
-                const svc = serviceManager.makeRequestContext();
-                svc.addService('req', req);
-                svc.addService('res', res);
+        // app.use(function(req: express.Request, res: any, next: express.NextFunction) {
+        //     res.streamPage = function(page) {
+        //         const svc = serviceManager.makeRequestContext();
+        //         svc.addService('req', req);
+        //         svc.addService('res', res);
 
-                let localstack = dust.makeBase({});
-                localstack = localstack.push(svc);
+        //         let localstack = dust.makeBase({});
+        //         localstack = localstack.push(svc);
 
-                dust.stream(page, localstack).pipe(res);
-            };
+        //         dust.stream(page, localstack).pipe(res);
+        //     };
 
-            next();
-        });
+        //     next();
+        // });
     }
 }

@@ -10,19 +10,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as express from 'express';
 
-var dust = require('../../../dust-fork');
-
 // TODO: config paths
-var viewPages = path.resolve('views/pages/');
-var serverPages = path.resolve('server/pages/');
-var serverComponents = path.resolve('server/components/');
-var extension = '.dust';
+var pagesDir = path.resolve('pages/');
+var extension = '.ltml';
 
 // TODO: experimenting with lazy-loading, but specifically for dev time only
 // TODO: figure out how to handle errors during page loading
 function wrapPage(page: string) {
     return function(req: express.Request, res: any, next: express.NextFunction) {
-        res.streamPage(page);
+        res.render(page);
     };
 }
 
@@ -80,7 +76,7 @@ export default class RouteLoader {
         var fileNoExt = filepath.substring(0, extensionIndex);
 
         var jsfile = fileNoExt + '.js';
-        var jsfullpath = serverPages + path.sep + jsfile;
+        var jsfullpath = pagesDir + path.sep + jsfile;
         const guessedUrl = '/' + determineUrl(fileNoExt);
 
         // check if a js file exists
@@ -97,7 +93,7 @@ export default class RouteLoader {
             console.log('static page', filepath, guessedUrl);
             this.router.get(guessedUrl, wrapPage('pages/' + fileNoExt));
         } else {
-            var ImplClass = require(path.resolve('server', 'pages', fileNoExt));
+            var ImplClass = require(path.resolve(pagesDir, fileNoExt));
             const url = ImplClass.pageUrl || guessedUrl;
 
             console.log('dynamic page', filepath, url);
@@ -148,7 +144,7 @@ export default class RouteLoader {
 
         // TODO: dont crash when these directories dont exist
         // scan for pages based on views (a page must have a view)
-        this.scanDirectory('', viewPages, this.createPageRoutes);
+        this.scanDirectory('', pagesDir, this.createPageRoutes);
 
         // scan component implementations to add action routes
         // scanDirectory('', serverComponents, loadComponentAndCreateRoutes);
