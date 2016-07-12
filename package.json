@@ -11,7 +11,7 @@
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.14.0",
-    "express-lisplate": "^0.1.1",
+    "express-lisplate": "^0.1.3",
     "express-session": "^1.13.0",
     "freshy": "^1.0.2",
     "lisplate": "^0.4.2",
