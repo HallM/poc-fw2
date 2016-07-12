@@ -43,6 +43,8 @@ export default class ViewEngine {
         app.set('view engine', ext);
         app.set('views', viewDir);
 
+        app.use(expressLisplate.localizationInit);
+
         // app.use(function(req: express.Request, res: any, next: express.NextFunction) {
         //     res.streamPage = function(page) {
         //         const svc = serviceManager.makeRequestContext();
