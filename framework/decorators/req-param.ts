@@ -5,17 +5,21 @@ import 'reflect-metadata';
 export const ReqParamMetaKey = Symbol("GetReqParam");
 
 function GetParam(type: string, name: string) {
-    return function(target: Object, propertyKey: string | symbol, parameterIndex: number) {
-        let existing: any[] = Reflect.getOwnMetadata(ReqParamMetaKey, target, propertyKey) || [];
-        existing.splice(0, 0, {type: type, name: name});
-        Reflect.defineMetadata(ReqParamMetaKey, existing, target, propertyKey);
-    };
+    return function(target: any, propertyKey: string) {
+        let servicesToInject: any = Reflect.getOwnMetadata(ReqParamMetaKey, target) || {};
+        servicesToInject[propertyKey] = {type: type, name: name};
+        Reflect.defineMetadata(ReqParamMetaKey, servicesToInject, target);
+    }
 }
 
-export function QueryParam(name: string) {
+export function Query(name: string) {
     return GetParam('query', name);
 }
 
-export function BodyParam(name: string) {
+export function Body(name: string) {
     return GetParam('body', name);
+}
+
+export function Header(name: string) {
+    return GetParam('header', name);
 }

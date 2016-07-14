@@ -11,6 +11,17 @@ import { serviceManager } from '../../';
 import { InjectServiceMetaKey } from '../../../service-manager/';
 import { ReqParamMetaKey } from '../../decorators/req-param';
 
+import { ReqParamMetaKey } from '../../decorators/req-param';
+
+function GetParam(type: string, name: string) {
+    return function(target: any, propertyKey: string) {
+        let servicesToInject: any = Reflect.getOwnMetadata(ReqParamMetaKey, target) || {};
+        servicesToInject[propertyKey] = {type: type, name: name};
+        Reflect.defineMetadata(ReqParamMetaKey, servicesToInject, target);
+    }
+}
+
+
 var expressLisplate = require('express-lisplate');
 
 interface ViewModelInterface {
