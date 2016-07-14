@@ -39,11 +39,12 @@ class MyPluginOne {
   @Before('MyPluginThree:blockedPhase')
   initPhase(myPluginTwo) {
     this.exposeService(globalService);
+
     whenSomethingHappens((value) => {
       this.trigger('some-event', 'hello world');
 
-      this.generateScope();
-      this.exposeService(value);
+      let scope = this.generateScope();
+      scope.exposeService(svcKey, value);
     });
 
     // we could, optionally, return something for MyPluginThree:blockedPhase to use
@@ -64,7 +65,7 @@ class MyPluginOne {
 
   @After('generate-scope')
   afterScopeGenerated(scope) {
-    scope.exposeService(scopedService);
+    scope.exposeService(scopedSvcKey, scopedService);
   }
 }
 export = MyPluginOne;
