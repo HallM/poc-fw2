@@ -11,17 +11,6 @@ import { serviceManager } from '../../';
 import { InjectServiceMetaKey } from '../../../service-manager/';
 import { ReqParamMetaKey } from '../../decorators/req-param';
 
-import { ReqParamMetaKey } from '../../decorators/req-param';
-
-function GetParam(type: string, name: string) {
-    return function(target: any, propertyKey: string) {
-        let servicesToInject: any = Reflect.getOwnMetadata(ReqParamMetaKey, target) || {};
-        servicesToInject[propertyKey] = {type: type, name: name};
-        Reflect.defineMetadata(ReqParamMetaKey, servicesToInject, target);
-    }
-}
-
-
 var expressLisplate = require('express-lisplate');
 
 interface ViewModelInterface {
@@ -52,12 +41,21 @@ export default class ViewEngine {
                             super(data);
                             if (data && data.$_svc) {
                                 var svc = data.$_svc;
+                                var req = svc.getService('req');
 
-                                const needinjects: string[] = Reflect.getMetadata(InjectServiceMetaKey, vm) || [];
+                                const needinjects: any = Reflect.getMetadata(InjectServiceMetaKey, this) || {};
+                                const reqinjects: any = Reflect.getMetadata(ReqParamMetaKey, this) || {};
 
-                                // Now do injections
-                                // but... components wind up not having access to these
-                                // is that a problem, or not? are pages the only thing allowed to have these?
+                                console.log(needinjects);
+                                console.log(reqinjects);
+
+                                for (let p in needinjects) {
+                                    this[p] = svc.getService(needinjects[p]);
+                                }
+                                for (let p in reqinjects) {
+                                    const reqfield = req[reqinjects[p].type];
+                                    this[p] = reqfield[reqinjects[p].name];
+                                }
                             }
                         }
                     };
@@ -86,7 +84,10 @@ export default class ViewEngine {
         //         dust.stream(page, localstack).pipe(res);
         //     };
 
-            res.locals.$_svc = serviceManager.makeRequestContext();
+            const svc = serviceManager.makeRequestContext();
+            svc.addService('req', req);
+            svc.addService('res', res);
+            res.locals.$_svc = svc;
             next();
         });
     }

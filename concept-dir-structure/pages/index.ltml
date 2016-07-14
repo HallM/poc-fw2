@@ -1,1 +1,1 @@
-{include "components/my-layout" (:content viewmodel::helloworld)}
+{include "components/my-layout" (:content {viewmodel::helloworld "world"})}
