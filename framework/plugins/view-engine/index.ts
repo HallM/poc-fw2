@@ -46,9 +46,6 @@ export default class ViewEngine {
                                 const needinjects: any = Reflect.getMetadata(InjectServiceMetaKey, this) || {};
                                 const reqinjects: any = Reflect.getMetadata(ReqParamMetaKey, this) || {};
 
-                                console.log(needinjects);
-                                console.log(reqinjects);
-
                                 for (let p in needinjects) {
                                     this[p] = svc.getService(needinjects[p]);
                                 }
