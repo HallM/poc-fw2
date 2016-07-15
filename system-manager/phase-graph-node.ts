@@ -13,15 +13,12 @@ export class PhaseGraphNode {
     private executor: Function
     private target: any
 
-    private returnedValue: any
-
     constructor(public eventName: string) {
         this.outwardLinks = [];
         this.inwardLinks = [];
         this.argumentNode = [];
         this.executor = null;
         this.target = null;
-        this.returnedValue = undefined;
     }
 
     claimNode(tgt: any, fn: Function) {
@@ -53,9 +50,8 @@ export class PhaseGraphNode {
         this.outwardLinks.splice(index, 1);
     }
 
-    async execute() {
-        const args = this.argumentNode.map(node => node.returnedValue);
-        this.returnedValue = await this.executor.apply(this.target, args);
+    execute() {
+        return this.executor.apply(this.target, []);
     }
 
     getDependencies(): PhaseGraphNode[] {

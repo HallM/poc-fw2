@@ -28,12 +28,13 @@ export { Plugin } from './decorators/plugin';
 export { InitPhase } from './decorators/init-phase';
 export { After } from './decorators/after';
 export { Before } from './decorators/before';
+export { Inject } from './decorators/inject';
 
 class BatchLoader {
   private graphNodes: PhaseGraphNode[]
 
-  constructor() {
-    this.graphNodes = [];
+  constructor(completedPhases: PhaseGraphNode[]) {
+    this.graphNodes = completedPhases ? completedPhases.slice() : [];
   }
 
   addPlugin(PluginClass: any) {
@@ -41,13 +42,14 @@ class BatchLoader {
       throw new Error('Cannot add null or undefined as a plugin');
     }
 
-    // get all "events", aka functions and their names
-    // the event name is {plugin name}:{fn name}
-    const plugin: any = new PluginClass();
     const name: string = PluginClass.pluginName;
     if (!name) {
       throw new Error('Cannot add a plugin without a pluginName');
     }
+
+    // get all "events", aka functions and their names
+    // the event name is {plugin name}:{fn name}
+    const plugin: any = new PluginClass();
 
     const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, plugin) || [];
 
@@ -79,6 +81,49 @@ class BatchLoader {
     });
   }
 
+  loadAll() {
+    const execStack = this.determineOrder();
+
+    const count = execStack.length;
+    let p = Promise.resolve();
+
+    for (let i=0; i < count; i++) {
+      p.then(() => execStack[i].execute());
+    }
+
+    return p.then(() => { return execStack; });
+  }
+
+  private determineOrder(): PhaseGraphNode[] {
+    this.checkForUnclaimed();
+
+    let execStack: PhaseGraphNode[] = [];
+
+    while (this.graphNodes.length) {
+      const preLength = this.graphNodes.length;
+      const foundNodes = this.graphNodes.filter(node => node.isLeaf());
+      if (foundNodes.length === 0) {
+        // TODO: is it possible to find these?
+        throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
+      }
+
+      foundNodes.forEach(node => {
+        // remove the links to the foundNodes
+        const deps = node.getDependencies();
+        deps.forEach(dep => dep.removeDependent(node));
+
+        // and also add to the execStack
+        execStack.push(node);
+      });
+
+      // remove the foundNodes from the list of graphNodes
+      this.graphNodes = this.graphNodes.filter(node => foundNodes.indexOf(node) === -1);
+    }
+
+    execStack.reverse();
+    return execStack;
+  }
+
   private findOrCreateNode(eventName: string): PhaseGraphNode {
     const foundNode: PhaseGraphNode = this.graphNodes.find(node => node.isSelf(eventName));
     if (!foundNode) {
@@ -91,7 +136,7 @@ class BatchLoader {
   }
 
   private checkForUnclaimed() {
-    const unclaimed: EventGraphNode[] = this
+    const unclaimed: PhaseGraphNode[] = this
       .graphNodes
       .filter(node => node.isUnclaimed());
 
@@ -102,68 +147,78 @@ class BatchLoader {
   }
 }
 
-export class PluginManager {
-    // this becomes sorted in execution order when in Ready phase
-    private services: any[]
+let currentBatch: BatchLoader = null;
+let completedPhases: PhaseGraphNode[] = [];
 
-    constructor() {
-        this.services = [];
+const services: any = {};
+const eventListeners: any = {};
+
+export const PluginManager = {
+  batchLoad(callback: Function) {
+    // don't run load for nested batches. all subbatches get loaded with the root-batch
+    const willLoad = !currentBatch;
+    if (!currentBatch) {
+      currentBatch = new BatchLoader(completedPhases);
     }
 
-    addBatch(callback: Function) {
+    callback(currentBatch);
 
+    if (willLoad) {
+      const loader = currentBatch;
+      currentBatch = null;
+
+      loader
+        .loadAll()
+        .then((completed) => {
+          completedPhases = completedPhases.concat(completed);
+        });
+    }
+  },
+
+  addPlugin(PluginClass: any) {
+    if (currentBatch) {
+      currentBatch.addPlugin(PluginClass);
+    } else {
+      var loader = new BatchLoader(completedPhases);
+      loader.addPlugin(PluginClass);
+      loader
+        .loadAll()
+        .then((completed) => {
+          completedPhases = completedPhases.concat(completed);
+        });
+    }
+  },
+
+  exposeService(name: string, service: any) {
+    services[name] = service;
+  },
+
+  getService(name: string): any {
+    return services[name];
+  },
+
+  on(event: string, listener: Function) {
+    const listeners: Function[] = eventListeners[event];
+    if (listeners.indexOf(listener) === -1) {
+      listeners.push(listener);
     }
 
-    addPlugin(PluginClass: Plugin) {
+    // give the caller back a way to unsubscribe
+    return () => {
+      const listeners: Function[] = eventListeners[event];
+      const index = listeners.indexOf(listener);
+      if (index !== -1) {
+        listeners.splice(index, 1);
+      }
+    };
+  },
+
+  trigger(event: string, evt: any) {
+    const listeners: Function[] = eventListeners[event];
+    if (listeners) {
+      listeners.forEach(function(listener) {
+        listener(evt);
+      });
     }
-
-
-    determineOrder() {
-        this.requirePhase(PmPhase.Discovery, 'Cannot determine order once out of discovery.');
-
-        this.phase = PmPhase.Sorting;
-
-        this.checkForUnclaimed();
-
-        let execStack: EventGraphNode[] = [];
-
-        while (this.graphNodes.length) {
-            const preLength = this.graphNodes.length;
-            const foundNodes = this.graphNodes.filter(node => node.isLeaf());
-            if (foundNodes.length === 0) {
-                // TODO: is it possible to find these?
-                throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
-            }
-
-            foundNodes.forEach(node => {
-                // remove the links to the foundNodes
-                const deps = node.getDependencies();
-                deps.forEach(dep => dep.removeDependent(node));
-
-                // and also add to the execStack
-                execStack.push(node);
-            });
-
-            // remove the foundNodes from the list of graphNodes
-            this.graphNodes = this.graphNodes.filter(node => foundNodes.indexOf(node) === -1);
-        }
-
-        execStack.reverse();
-        this.graphNodes = execStack;
-        this.phase = PmPhase.Ready;
-    }
-
-    async loadAll() {
-        this.requirePhase(PmPhase.Ready, 'Cannot load plugins until execution order is ready.');
-
-        this.phase = PmPhase.Loading;
-        const count = this.graphNodes.length;
-        for (let i=0; i < count; i++) {
-            await this.graphNodes[i].execute();
-        }
-
-        // just remove all the nodes to clear any memory and also prevent re-loads
-        this.graphNodes = [];
-        this.phase = PmPhase.Loaded;
-    }
+  }
 }
