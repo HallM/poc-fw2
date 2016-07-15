@@ -35,9 +35,10 @@ import { Plugin, InitPhase, After, Before } from 'fwsys'
 @Plugin
 class MyPluginOne {
   @InitPhase
+  @Inject(someservice)
   @After('MyPluginTwo:somePhase')
   @Before('MyPluginThree:blockedPhase')
-  initPhase(myPluginTwo) {
+  initPhase(someService) {
     this.exposeService(globalService);
 
     whenSomethingHappens((value) => {

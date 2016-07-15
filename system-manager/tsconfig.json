@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "declaration": true,
+        "module": "commonjs",
+        "target": "ES6",
+        "outDir": "./dist",
+        "experimentalDecorators": true
+    },
+    "exclude": [
+    ]
+}
