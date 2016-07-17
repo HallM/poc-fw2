@@ -23,18 +23,21 @@ import { PhaseGraphNode } from './phase-graph-node';
 import { InitPhaseMetaKey } from './decorators/init-phase';
 import { AfterMetaKey } from './decorators/after';
 import { BeforeMetaKey } from './decorators/before';
+import { OnEventMetaKey } from './decorators/on';
+import { InjectServiceMetaKey } from './decorators/inject';
 
 export { Plugin } from './decorators/plugin';
 export { InitPhase } from './decorators/init-phase';
 export { After } from './decorators/after';
 export { Before } from './decorators/before';
+export { On } from './decorators/on';
 export { Inject } from './decorators/inject';
 
 class BatchLoader {
   private graphNodes: PhaseGraphNode[]
 
-  constructor(completedPhases: PhaseGraphNode[]) {
-    this.graphNodes = completedPhases ? completedPhases.slice() : [];
+  constructor() {
+    this.graphNodes = completedPhases.slice();
   }
 
   addPlugin(PluginClass: any) {
@@ -50,6 +53,7 @@ class BatchLoader {
     // get all "events", aka functions and their names
     // the event name is {plugin name}:{fn name}
     const plugin: any = new PluginClass();
+    injectInto(plugin, null);
 
     const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, plugin) || [];
 
@@ -85,13 +89,12 @@ class BatchLoader {
     const execStack = this.determineOrder();
 
     const count = execStack.length;
-    let p = Promise.resolve();
 
     for (let i=0; i < count; i++) {
-      p.then(() => execStack[i].execute());
+      execStack[i].execute();
     }
 
-    return p.then(() => { return execStack; });
+    return execStack;
   }
 
   private determineOrder(): PhaseGraphNode[] {
@@ -147,78 +150,118 @@ class BatchLoader {
   }
 }
 
+export class ServiceContext {
+    private context: any
+
+    constructor(startingContext?: ServiceContext) {
+        this.context = startingContext ? Object.assign({}, startingContext.context) : {};
+    }
+
+    exposeService(name: string, service: any) {
+        this.context[name] = service;
+    }
+
+    getService(name: string): any {
+        return this.context[name];
+    }
+}
+
 let currentBatch: BatchLoader = null;
 let completedPhases: PhaseGraphNode[] = [];
+const globalServiceContext = new ServiceContext();
 
-const services: any = {};
 const eventListeners: any = {};
 
-export const PluginManager = {
-  batchLoad(callback: Function) {
-    // don't run load for nested batches. all subbatches get loaded with the root-batch
-    const willLoad = !currentBatch;
-    if (!currentBatch) {
-      currentBatch = new BatchLoader(completedPhases);
-    }
+function batchLoad(callback: Function) {
+  // don't run load for nested batches. all subbatches get loaded with the root-batch
+  const willLoad = !currentBatch;
+  if (!currentBatch) {
+    currentBatch = new BatchLoader();
+  }
 
-    callback(currentBatch);
+  callback(currentBatch);
 
-    if (willLoad) {
-      const loader = currentBatch;
-      currentBatch = null;
-
-      loader
-        .loadAll()
-        .then((completed) => {
-          completedPhases = completedPhases.concat(completed);
-        });
-    }
-  },
-
-  addPlugin(PluginClass: any) {
-    if (currentBatch) {
-      currentBatch.addPlugin(PluginClass);
-    } else {
-      var loader = new BatchLoader(completedPhases);
-      loader.addPlugin(PluginClass);
-      loader
-        .loadAll()
-        .then((completed) => {
-          completedPhases = completedPhases.concat(completed);
-        });
-    }
-  },
-
-  exposeService(name: string, service: any) {
-    services[name] = service;
-  },
-
-  getService(name: string): any {
-    return services[name];
-  },
-
-  on(event: string, listener: Function) {
-    const listeners: Function[] = eventListeners[event];
-    if (listeners.indexOf(listener) === -1) {
-      listeners.push(listener);
-    }
-
-    // give the caller back a way to unsubscribe
-    return () => {
-      const listeners: Function[] = eventListeners[event];
-      const index = listeners.indexOf(listener);
-      if (index !== -1) {
-        listeners.splice(index, 1);
-      }
-    };
-  },
-
-  trigger(event: string, evt: any) {
-    const listeners: Function[] = eventListeners[event];
-    if (listeners) {
-      listeners.forEach(function(listener) {
-        listener(evt);
-      });
-    }
+  if (willLoad) {
+    const loader = currentBatch;
+    currentBatch = null;
+    completedPhases = completedPhases.concat(loader.loadAll());
   }
 }
+
+function addPlugin(PluginClass: any) {
+  if (currentBatch) {
+    currentBatch.addPlugin(PluginClass);
+  } else {
+    var loader = new BatchLoader();
+    loader.addPlugin(PluginClass);
+    completedPhases = completedPhases.concat(loader.loadAll());
+  }
+}
+
+function exposeService(name: string, service: any) {
+  globalServiceContext.exposeService(name, service);
+}
+
+function getService(name: string): any {
+  return globalServiceContext.getService(name);
+}
+
+function generateScope(): any {
+  let svcScope = new ServiceContext(globalServiceContext);
+  trigger('generate-scope', svcScope);
+  return svcScope;
+}
+
+function injectInto(obj: any, scope: ServiceContext) {
+  const context = scope || globalServiceContext;
+  const onEvents: string[] = Reflect.getMetadata(OnEventMetaKey, obj) || {};
+  const injects: string[] = Reflect.getMetadata(InjectServiceMetaKey, obj) || {};
+
+  for (let prop in onEvents) {
+    on(onEvents[prop], obj[prop]);
+  }
+
+  for (let prop in injects) {
+    context[prop] = context.getService(onEvents[prop]);
+  }
+}
+
+function on(event: string, listener: Function) {
+  if (!eventListeners[event]) {
+    eventListeners[event] = [];
+  }
+
+  const listeners: Function[] = eventListeners[event];
+  if (listeners.indexOf(listener) === -1) {
+    listeners.push(listener);
+  }
+
+  // give the caller back a way to unsubscribe
+  return () => {
+    const listeners: Function[] = eventListeners[event];
+    const index = listeners.indexOf(listener);
+    if (index !== -1) {
+      listeners.splice(index, 1);
+    }
+  };
+}
+
+function trigger(event: string, evt?: any) {
+  const listeners: Function[] = eventListeners[event];
+  if (listeners) {
+    listeners.forEach(function(listener) {
+      listener(evt);
+    });
+  }
+}
+
+export const PluginManager = {
+  batchLoad,
+  addPlugin,
+  exposeService,
+  getService,
+  generateScope,
+  injectInto,
+  on,
+  trigger
+};

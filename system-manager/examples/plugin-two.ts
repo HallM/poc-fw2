@@ -5,6 +5,7 @@ class MyPluginTwo {
   @InitPhase
   somePhase() {
     console.log('this is MyPluginTwo:somePhase');
+    (this as any).trigger('some-event');
   }
 }
 export = MyPluginTwo;

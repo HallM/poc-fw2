@@ -1,4 +1,6 @@
 declare class MyPluginOne {
-    initPhase(someService: any): void;
+    initPhase(): void;
+    onSomeEvent(): void;
+    onScopeGenerated(scope: any): void;
 }
 export = MyPluginOne;

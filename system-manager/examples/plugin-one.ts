@@ -1,17 +1,24 @@
-import { Plugin, InitPhase, After, Before, Inject } from '../'
+import { Plugin, InitPhase, After, Before, On, Inject } from '../'
 
 @Plugin('MyPluginOne')
 class MyPluginOne {
   @InitPhase
   @After('MyPluginTwo:somePhase')
   @Before('MyPluginThree:blockedPhase')
-  initPhase(someService) {
+  initPhase() {
+    (this as any).exposeService('global', {globalme: 'this is global'});
     console.log('this is MyPluginOne:initPhase');
   }
 
-  // @After('generate-scope')
-  // afterScopeGenerated(scope) {
-  //   scope.exposeService('svc', {});
-  // }
+  @On('some-event')
+  onSomeEvent() {
+    console.log('MyPluginOne doing something with some-event');
+  }
+
+  @On('generate-scope')
+  onScopeGenerated(scope) {
+    console.log('MyPluginOne responding to scope generation');
+    scope.exposeService('scoped', {scopeme: 'this is scoped'});
+  }
 }
 export = MyPluginOne;
