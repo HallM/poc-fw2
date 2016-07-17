@@ -14,7 +14,7 @@ import { ReqParamMetaKey } from '../../decorators/req-param';
 var expressLisplate = require('express-lisplate');
 
 interface ViewModelInterface {
-  new(data: any): ViewModelInterface
+  new(data: any, strings: any, renderContext: any): ViewModelInterface
 }
 
 export default class ViewEngine {
@@ -37,10 +37,10 @@ export default class ViewEngine {
                     var vm: ViewModelInterface = require(modelpath);
 
                     viewmodel = class ViewModel extends vm {
-                        constructor(data) {
-                            super(data);
-                            if (data && data.$_svc) {
-                                var svc = data.$_svc;
+                        constructor(data, strings, renderContext) {
+                            super(data, strings, renderContext);
+                            if (renderContext && renderContext.$_svc) {
+                                var svc = renderContext.$_svc;
                                 var req = svc.getService('req');
 
                                 const needinjects: any = Reflect.getMetadata(InjectServiceMetaKey, this) || {};
@@ -84,7 +84,10 @@ export default class ViewEngine {
             const svc = serviceManager.makeRequestContext();
             svc.addService('req', req);
             svc.addService('res', res);
-            res.locals.$_svc = svc;
+            if (!res.locals.$_renderContext) {
+                res.locals.$_renderContext = {};
+            }
+            res.locals.$_renderContext.svc = svc;
             next();
         });
     }
