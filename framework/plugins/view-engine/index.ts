@@ -39,8 +39,8 @@ export default class ViewEngine {
                     viewmodel = class ViewModel extends vm {
                         constructor(data, strings, renderContext) {
                             super(data, strings, renderContext);
-                            if (renderContext && renderContext.$_svc) {
-                                var svc = renderContext.$_svc;
+                            if (renderContext && renderContext.svc) {
+                                var svc = renderContext.svc;
                                 var req = svc.getService('req');
 
                                 const needinjects: any = Reflect.getMetadata(InjectServiceMetaKey, this) || {};

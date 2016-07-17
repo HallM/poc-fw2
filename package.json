@@ -14,7 +14,7 @@
     "express-lisplate": "^0.2.0",
     "express-session": "^1.13.0",
     "freshy": "^1.0.2",
-    "lisplate": "^0.4.2",
+    "lisplate": "^0.5.3",
     "reflect-metadata": "^0.1.3",
     "typescript": "^1.8.10"
   }
