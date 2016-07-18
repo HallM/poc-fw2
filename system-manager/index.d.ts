@@ -18,7 +18,7 @@ export declare const PluginManager: {
     exposeService: (name: string, service: any) => void;
     getService: (name: string) => any;
     generateScope: () => any;
-    injectInto: (obj: any, scope: ServiceContext) => void;
+    injectInto: (obj: any, scope?: ServiceContext) => void;
     on: (event: string, listener: Function) => () => void;
     trigger: (event: string, evt?: any) => void;
 };

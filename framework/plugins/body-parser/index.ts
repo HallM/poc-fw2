@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 var bodyParser = require('body-parser');
 
+@Plugin
 export default class BodyParser {
-    static pluginName: string = 'body-parser'
-
-    @Event
-    @WaitOn('express:load')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    load() {
         console.log('load body parser');
+        const app = PluginManager.getService('express');
         app.use(bodyParser.urlencoded({ extended: true }));
         app.use(bodyParser.json());
     }

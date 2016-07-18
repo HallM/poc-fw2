@@ -2,19 +2,19 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 var session = require('express-session');
 
+@Plugin
 export default class HttpSessions {
-    static pluginName: string = 'http-sessions'
-
-    @Event
-    @WaitOn('express:load')
-    @WaitOn('cookie-parser:load')
-    @WaitOn('static-routes:load')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    @After('CookieParser:load')
+    @After('StaticRoutes:load')
+    load() {
         console.log('load sessions');
+        const app = PluginManager.getService('express');
         app.use(session({
             // store: sessionStore,
             secret: 'keyboardcattodo',

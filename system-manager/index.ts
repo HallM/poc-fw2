@@ -212,7 +212,7 @@ function generateScope(): any {
   return svcScope;
 }
 
-function injectInto(obj: any, scope: ServiceContext) {
+function injectInto(obj: any, scope?: ServiceContext) {
   const context = scope || globalServiceContext;
   const onEvents: string[] = Reflect.getMetadata(OnEventMetaKey, obj) || {};
   const injects: string[] = Reflect.getMetadata(InjectServiceMetaKey, obj) || {};
@@ -222,7 +222,7 @@ function injectInto(obj: any, scope: ServiceContext) {
   }
 
   for (let prop in injects) {
-    context[prop] = context.getService(onEvents[prop]);
+    obj[prop] = context.getService(injects[prop]);
   }
 }
 

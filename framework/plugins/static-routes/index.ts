@@ -2,18 +2,18 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 import * as express from 'express';
 
+@Plugin
 export default class StaticRoutes {
-    static pluginName: string = 'static-routes'
-
-    @Event
-    @WaitOn('express:load')
-    @WaitOn('express-compression:load')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    @After('ExpressCompression:load')
+    load() {
         console.log('load static routes');
+        const app = PluginManager.getService('express');
         app.use(express.static('public'));
     }
 }

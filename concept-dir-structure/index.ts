@@ -1,5 +1,3 @@
-import Framework from '../framework/';
+require('../framework/');
 
-const fw = new Framework();
-
-fw.start();
+console.log('hello world');

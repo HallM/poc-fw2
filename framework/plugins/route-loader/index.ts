@@ -2,9 +2,7 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
-import { serviceManager } from '../../';
-import { InjectServiceMetaKey } from '../../../service-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 import * as path from 'path';
 import * as fs from 'fs';
@@ -59,9 +57,8 @@ function determineUrl(filepath: string) {
 // function loadComponentAndCreateRoutes(filepath, filefullpath) {
 // }
 
+@Plugin
 export default class RouteLoader {
-    static pluginName: string = 'route-loader'
-
     private router: express.Router
 
     private createPageRoutes(filepath: string, filefullpath: string) {
@@ -131,13 +128,14 @@ export default class RouteLoader {
         });
     }
 
-    @Event
-    @WaitOn('express:load')
-    @WaitOn('body-parser:load')
-    @WaitOn('http-sessions:load')
-    @Block('error-router:load')
-    @Block('express:run')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    @After('BodyParser:load')
+    @After('HttpSessions:load')
+    @Before('ErrorRouter:load')
+    @Before('Express:run')
+    load() {
+        const app = PluginManager.getService('express');
         console.log('find and load page routes');
 
         this.router = express.Router();

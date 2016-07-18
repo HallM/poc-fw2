@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 var compression = require('compression');
 
+@Plugin
 export default class ExpressCompression {
-    static pluginName: string = 'express-compression'
-
-    @Event
-    @WaitOn('express:load')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    load() {
         console.log('load compression');
+        const app = PluginManager.getService('express');
         app.use(compression());
     }
 }

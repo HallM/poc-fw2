@@ -1,12 +1,12 @@
-import { Plugin, InitPhase, After, Before, On, Inject } from '../'
+import { PluginManager, Plugin, InitPhase, After, Before, On, Inject } from '../'
 
-@Plugin('MyPluginOne')
+@Plugin
 class MyPluginOne {
   @InitPhase
   @After('MyPluginTwo:somePhase')
   @Before('MyPluginThree:blockedPhase')
   initPhase() {
-    (this as any).exposeService('global', {globalme: 'this is global'});
+    PluginManager.exposeService('global', {globalme: 'this is global'});
     console.log('this is MyPluginOne:initPhase');
   }
 

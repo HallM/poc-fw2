@@ -1,9 +1,9 @@
 import { PageUrl } from '../../framework/decorators/page-url';
 import { Query } from '../../framework/decorators/req-param';
-import { InjectService } from '../../service-manager/';
+import { Inject } from '../../system-manager/';
 
 class Index {
-  @InjectService('req')
+  @Inject('req')
   req: any
 
   @Query('test')

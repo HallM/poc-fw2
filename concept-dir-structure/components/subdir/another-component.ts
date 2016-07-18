@@ -1,7 +1,7 @@
-import { InjectService } from '../../../service-manager/';
+import { Inject } from '../../../system-manager/';
 
 class AnotherComponent {
-  @InjectService('req')
+  @Inject('req')
   req: any
 
   asyncme() {

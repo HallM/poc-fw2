@@ -2,17 +2,17 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 var cookieParser = require('cookie-parser');
 
-export default class BodyParser {
-    static pluginName: string = 'cookie-parser'
-
-    @Event
-    @WaitOn('express:load')
-    load(app) {
+@Plugin
+export default class CookieParser {
+    @InitPhase
+    @After('Express:load')
+    load() {
         console.log('load cookie parser');
+        const app = PluginManager.getService('express');
         app.use(cookieParser());
     }
 }

@@ -2,28 +2,27 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
-import { serviceManager } from '../../';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 import * as express from 'express';
 
+@Plugin
 export default class Express {
-    static pluginName: string = 'express'
+    app: any
 
-    @Event
+    @InitPhase
     load() {
         console.log('load express');
-        const app = express();
-        serviceManager.addService('express', app);
-        return app;
+        this.app = express();
+        PluginManager.exposeService('express', this.app);
     }
 
-    @Event
-    @WaitOn('express:load')
-    run(app) {
+    @InitPhase
+    @After('Express:load')
+    run() {
         return new Promise(resolve => {
             var port = process.env.PORT || 3000;
-            var server = app.listen(port, function() {
+            var server = this.app.listen(port, function() {
                 console.log('App listening on port %s', port);
                 resolve(server);
             });

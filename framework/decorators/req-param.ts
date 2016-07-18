@@ -23,3 +23,7 @@ export function Body(name: string) {
 export function Header(name: string) {
     return GetParam('header', name);
 }
+
+export function Param(name: string) {
+    return GetParam('params', name);
+}

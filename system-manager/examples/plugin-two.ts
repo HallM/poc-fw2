@@ -1,11 +1,11 @@
-import { Plugin, InitPhase, After, Before, Inject } from '../'
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../'
 
-@Plugin('MyPluginTwo')
+@Plugin
 class MyPluginTwo {
   @InitPhase
   somePhase() {
     console.log('this is MyPluginTwo:somePhase');
-    (this as any).trigger('some-event');
+    PluginManager.trigger('some-event');
   }
 }
 export = MyPluginTwo;

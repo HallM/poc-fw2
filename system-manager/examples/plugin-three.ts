@@ -1,6 +1,6 @@
-import { Plugin, InitPhase, After, Before, Inject } from '../'
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../'
 
-@Plugin('MyPluginThree')
+@Plugin
 class MyPluginThree {
   @InitPhase
   blockedPhase() {

@@ -2,14 +2,11 @@
 
 'use strict';
 
-import { Event, WaitOn, Block } from '../../../plugin-system/';
-import * as path from 'path';
-
-import * as express from 'express';
-
-import { serviceManager } from '../../';
-import { InjectServiceMetaKey } from '../../../service-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 import { ReqParamMetaKey } from '../../decorators/req-param';
+
+import * as path from 'path';
+import * as express from 'express';
 
 var expressLisplate = require('express-lisplate');
 
@@ -17,14 +14,14 @@ interface ViewModelInterface {
   new(data: any, strings: any, renderContext: any): ViewModelInterface
 }
 
+@Plugin
 export default class ViewEngine {
-    static pluginName: string = 'view-engine'
-
-    @Event
-    @WaitOn('express:load')
-    @Block('express-compression:load')
-    load(app) {
+    @InitPhase
+    @After('Express:load')
+    @Before('ExpressCompression:load')
+    load() {
         console.log('load view engine');
+        const app = PluginManager.getService('express');
 
         const ext = 'ltml';
         const viewDir = '';
@@ -43,12 +40,9 @@ export default class ViewEngine {
                                 var svc = renderContext.svc;
                                 var req = svc.getService('req');
 
-                                const needinjects: any = Reflect.getMetadata(InjectServiceMetaKey, this) || {};
-                                const reqinjects: any = Reflect.getMetadata(ReqParamMetaKey, this) || {};
+                                PluginManager.injectInto(this, svc);
 
-                                for (let p in needinjects) {
-                                    this[p] = svc.getService(needinjects[p]);
-                                }
+                                const reqinjects: any = Reflect.getMetadata(ReqParamMetaKey, this) || {};
                                 for (let p in reqinjects) {
                                     const reqfield = req[reqinjects[p].type];
                                     this[p] = reqfield[reqinjects[p].name];
@@ -70,20 +64,9 @@ export default class ViewEngine {
         app.use(expressLisplate.localizationInit);
 
         app.use(function(req: express.Request, res: any, next: express.NextFunction) {
-        //     res.streamPage = function(page) {
-        //         const svc = serviceManager.makeRequestContext();
-        //         svc.addService('req', req);
-        //         svc.addService('res', res);
-
-        //         let localstack = dust.makeBase({});
-        //         localstack = localstack.push(svc);
-
-        //         dust.stream(page, localstack).pipe(res);
-        //     };
-
-            const svc = serviceManager.makeRequestContext();
-            svc.addService('req', req);
-            svc.addService('res', res);
+            const svc = PluginManager.generateScope();
+            svc.exposeService('req', req);
+            svc.exposeService('res', res);
             if (!res.locals.$_renderContext) {
                 res.locals.$_renderContext = {};
             }
