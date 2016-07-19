@@ -13,8 +13,8 @@ export declare class ServiceContext {
     getService(name: string): any;
 }
 export declare const PluginManager: {
-    batchLoad: (callback: Function) => void;
-    addPlugin: (PluginClass: any) => void;
+    batchLoad: (callback: Function) => Promise<any>;
+    addPlugin: (PluginClass: any) => Promise<any>;
     exposeService: (name: string, service: any) => void;
     getService: (name: string) => any;
     generateScope: () => any;

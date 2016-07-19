@@ -1,5 +1,6 @@
 declare class MyPluginOne {
-    initPhase(): void;
+    initPhase(two: any): number;
+    concurrentThings(): Promise<{}>;
     onSomeEvent(): void;
     onScopeGenerated(scope: any): void;
 }

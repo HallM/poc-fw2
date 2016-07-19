@@ -1,4 +1,6 @@
 declare class MyPluginThree {
-    blockedPhase(): void;
+    blockedPhase(): number;
+    concurrentThings(): Promise<{}>;
+    onScopeGenerated(scope: any): void;
 }
 export = MyPluginThree;

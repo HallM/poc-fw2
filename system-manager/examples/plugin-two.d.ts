@@ -1,4 +1,5 @@
 declare class MyPluginTwo {
-    somePhase(): void;
+    somePhase(): number;
+    concurrentThings(): Promise<{}>;
 }
 export = MyPluginTwo;

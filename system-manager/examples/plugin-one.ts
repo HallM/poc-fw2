@@ -5,9 +5,19 @@ class MyPluginOne {
   @InitPhase
   @After('MyPluginTwo:somePhase')
   @Before('MyPluginThree:blockedPhase')
-  initPhase() {
+  initPhase(two) {
+    console.log('this is MyPluginOne:initPhase', two);
     PluginManager.exposeService('global', {globalme: 'this is global'});
-    console.log('this is MyPluginOne:initPhase');
+    return 1;
+  }
+
+  @InitPhase
+  @Before('MyPluginTwo:somePhase')
+  concurrentThings() {
+    console.log('start MyPluginOne:concurrentThings waiting 1s');
+    return new Promise((resolve, reject) => {
+      setTimeout(() => resolve('from MyPluginOne'), 1000);
+    });
   }
 
   @On('some-event')

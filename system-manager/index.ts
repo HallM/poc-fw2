@@ -33,14 +33,33 @@ export { Before } from './decorators/before';
 export { On } from './decorators/on';
 export { Inject } from './decorators/inject';
 
+function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
+  let p = Promise.resolve();
+  const count = execNodes.length;
+
+  return Promise.all(execNodes.map((node) => {
+    return node.execute();
+  })).then(() => {
+    completedPhases = completedPhases.concat(execNodes);
+  });
+}
+
 class BatchLoader {
   private graphNodes: PhaseGraphNode[]
+  finalPromise: Promise<any>
+
+  private resolver: Function
+  private rejecter: Function
 
   constructor() {
-    this.graphNodes = completedPhases.slice();
+    this.graphNodes = [];
+    this.finalPromise = new Promise((resolve, reject) => {
+      this.resolver = resolve;
+      this.rejecter = reject;
+    });
   }
 
-  addPlugin(PluginClass: any) {
+  addPlugin(PluginClass: any): Promise<any> {
     if (!PluginClass) {
       throw new Error('Cannot add null or undefined as a plugin');
     }
@@ -78,33 +97,52 @@ class BatchLoader {
       blocks.forEach(dep => {
         const depNode: PhaseGraphNode = this.findOrCreateNode(dep);
 
+        // TODO: do something if a @Before thing is already loaded
+
         // TODO: handle the plugin:* case
         depNode.addDependentOn(node);
         node.addDependencyOf(depNode);
       });
     });
+
+    return this.finalPromise;
   }
 
-  loadAll() {
+  loadAll(): Promise<any> {
     const execStack = this.determineOrder();
 
-    const count = execStack.length;
+    let p = Promise.resolve();
+    const groupCount = execStack.length;
 
-    for (let i=0; i < count; i++) {
-      execStack[i].execute();
+    for (let i=0; i < groupCount; i++) {
+      p = p.then(() => {
+        return loadAsyncGroup(execStack[i]);
+      });
     }
 
-    return execStack;
+    p.then(() => {
+      this.resolver(this.graphNodes);
+    }).catch((e) => {
+      this.rejecter(e);
+    });
+
+    return this.finalPromise;
   }
 
-  private determineOrder(): PhaseGraphNode[] {
+  private determineOrder(): PhaseGraphNode[][] {
     this.checkForUnclaimed();
 
-    let execStack: PhaseGraphNode[] = [];
+    let nodes = this.graphNodes.slice();
+    let execStack: PhaseGraphNode[][] = [];
 
-    while (this.graphNodes.length) {
-      const preLength = this.graphNodes.length;
-      const foundNodes = this.graphNodes.filter(node => node.isLeaf());
+    // first, gather everything with no deps. optimization basically
+
+    // now gather everything with reqs
+    while (nodes.length) {
+      let groupStack = [];
+
+      const preLength = nodes.length;
+      const foundNodes = nodes.filter(node => node.isLeaf());
       if (foundNodes.length === 0) {
         // TODO: is it possible to find these?
         throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
@@ -116,11 +154,13 @@ class BatchLoader {
         deps.forEach(dep => dep.removeDependent(node));
 
         // and also add to the execStack
-        execStack.push(node);
+        groupStack.push(node);
       });
 
       // remove the foundNodes from the list of graphNodes
-      this.graphNodes = this.graphNodes.filter(node => foundNodes.indexOf(node) === -1);
+      nodes = nodes.filter(node => foundNodes.indexOf(node) === -1);
+
+      execStack.push(groupStack);
     }
 
     execStack.reverse();
@@ -128,7 +168,12 @@ class BatchLoader {
   }
 
   private findOrCreateNode(eventName: string): PhaseGraphNode {
-    const foundNode: PhaseGraphNode = this.graphNodes.find(node => node.isSelf(eventName));
+    let foundNode: PhaseGraphNode = this.graphNodes.find(node => node.isSelf(eventName));
+
+    if (!foundNode) {
+      foundNode = completedPhases.find(node => node.isSelf(eventName));
+    }
+
     if (!foundNode) {
       const newNode = new PhaseGraphNode(eventName);
       this.graphNodes.push(newNode);
@@ -172,7 +217,7 @@ const globalServiceContext = new ServiceContext();
 
 const eventListeners: any = {};
 
-function batchLoad(callback: Function) {
+function batchLoad(callback: Function): Promise<any> {
   // don't run load for nested batches. all subbatches get loaded with the root-batch
   const willLoad = !currentBatch;
   if (!currentBatch) {
@@ -184,17 +229,19 @@ function batchLoad(callback: Function) {
   if (willLoad) {
     const loader = currentBatch;
     currentBatch = null;
-    completedPhases = completedPhases.concat(loader.loadAll());
+    return loader.loadAll();
   }
+
+  return currentBatch.finalPromise;
 }
 
-function addPlugin(PluginClass: any) {
+function addPlugin(PluginClass: any): Promise<any> {
   if (currentBatch) {
-    currentBatch.addPlugin(PluginClass);
+    return currentBatch.addPlugin(PluginClass);
   } else {
     var loader = new BatchLoader();
     loader.addPlugin(PluginClass);
-    completedPhases = completedPhases.concat(loader.loadAll());
+    return loader.loadAll();
   }
 }
 
