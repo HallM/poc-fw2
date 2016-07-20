@@ -1,4 +1,4 @@
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../'
+import { PluginManager, Plugin, InitPhase, After, Before, On, Inject } from '../'
 
 @Plugin
 class MyPluginTwo {
@@ -10,7 +10,6 @@ class MyPluginTwo {
   }
 
   @InitPhase
-  @Before('MyPluginTwo:somePhase')
   concurrentThings() {
     console.log('start MyPluginTwo:concurrentThings waiting 1s');
     return new Promise((resolve, reject) => {

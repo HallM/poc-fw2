@@ -2,10 +2,10 @@
 
 export class PhaseGraphNode {
     // points to things that depend on this
-    private outwardLinks: PhaseGraphNode[]
+    private dependents: PhaseGraphNode[]
 
     // points to things that this depends on
-    private inwardLinks: PhaseGraphNode[]
+    private dependencies: PhaseGraphNode[]
 
     private argumentNode: PhaseGraphNode[]
 
@@ -15,13 +15,23 @@ export class PhaseGraphNode {
 
     private returnedValue: any
 
-    constructor(public eventName: string) {
-        this.outwardLinks = [];
-        this.inwardLinks = [];
+    constructor(public eventName: string, public required: boolean = false) {
+        this.dependents = [];
+        this.dependencies = [];
         this.argumentNode = [];
         this.executor = null;
         this.target = null;
         this.returnedValue = undefined;
+    }
+
+    isRequired() {
+        return this.required;
+    }
+
+    wouldBeReady(nodes: PhaseGraphNode[], ignoreUnRequired: boolean) {
+        return this.dependencies.every(node => {
+            return nodes.indexOf(node) !== -1 || (ignoreUnRequired && !node.required);
+        });
     }
 
     claimNode(tgt: any, fn: Function) {
@@ -35,22 +45,26 @@ export class PhaseGraphNode {
         }
     }
 
-    addDependentOn(node: PhaseGraphNode) {
-        if (this.inwardLinks.indexOf(node) === -1) {
-            this.inwardLinks.push(node);
+    addDependency(node: PhaseGraphNode) {
+        this.addWeakDependency(node);
+        node.required = true;
+    }
+
+    addWeakDependency(node: PhaseGraphNode) {
+        if (this.dependencies.indexOf(node) === -1) {
+            this.dependencies.push(node);
         }
     }
 
-    addDependencyOf(node: PhaseGraphNode) {
-        if (this.outwardLinks.indexOf(node) === -1) {
-            this.outwardLinks.push(node);
-        }
+    addDependent(node: PhaseGraphNode) {
+        this.addWeakDependent(node);
+        node.required = true;
     }
 
-    removeDependent(node: PhaseGraphNode) {
-        const index: number = this.outwardLinks.indexOf(node);
-        // TODO: protect against index being invalid
-        this.outwardLinks.splice(index, 1);
+    addWeakDependent(node: PhaseGraphNode) {
+        if (this.dependents.indexOf(node) === -1) {
+            this.dependents.push(node);
+        }
     }
 
     execute() {
@@ -64,7 +78,7 @@ export class PhaseGraphNode {
     }
 
     getDependencies(): PhaseGraphNode[] {
-        return this.inwardLinks.slice();
+        return this.dependencies.slice();
     }
 
     isUnclaimed(): boolean {
@@ -77,16 +91,16 @@ export class PhaseGraphNode {
 
     isDepedencyOf(event: string): boolean {
         // TODO: infinity loop when circular dependency
-        return this.isSelf(event) || this.outwardLinks.some(link => link.isDepedencyOf(event));
+        return this.isSelf(event) || this.dependents.some(link => link.isDepedencyOf(event));
     }
 
     isDependentOn(event: string): boolean {
         // TODO: infinity loop when circular dependency
-        return this.isSelf(event) || this.inwardLinks.some(link => link.isDependentOn(event));
+        return this.isSelf(event) || this.dependencies.some(link => link.isDependentOn(event));
     }
 
     isLeaf(): boolean {
-        return this.outwardLinks.length === 0;
+        return this.dependents.length === 0;
     }
 
     toString(): string {

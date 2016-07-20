@@ -20,4 +20,6 @@ PluginManager.batchLoad(() => {
   const scope = PluginManager.generateScope();
   console.log(scope);
   console.log(scope.getService('scoped'));
+}).catch(e => {
+  console.log(e);
 });

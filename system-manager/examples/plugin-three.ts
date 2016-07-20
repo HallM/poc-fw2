@@ -9,7 +9,6 @@ class MyPluginThree {
   }
 
   @InitPhase
-  @Before('MyPluginTwo:somePhase')
   concurrentThings() {
     console.log('start MyPluginTwo:concurrentThings waiting only 50ms');
     return new Promise((resolve, reject) => {

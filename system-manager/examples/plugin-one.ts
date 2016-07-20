@@ -5,6 +5,8 @@ class MyPluginOne {
   @InitPhase
   @After('MyPluginTwo:somePhase')
   @Before('MyPluginThree:blockedPhase')
+  @After('notreally:aphase', false)
+  @Before('alsonot:aphase', false)
   initPhase(two) {
     console.log('this is MyPluginOne:initPhase', two);
     PluginManager.exposeService('global', {globalme: 'this is global'});
@@ -12,7 +14,6 @@ class MyPluginOne {
   }
 
   @InitPhase
-  @Before('MyPluginTwo:somePhase')
   concurrentThings() {
     console.log('start MyPluginOne:concurrentThings waiting 1s');
     return new Promise((resolve, reject) => {

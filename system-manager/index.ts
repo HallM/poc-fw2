@@ -78,8 +78,8 @@ class BatchLoader {
 
     phases.forEach(event => {
       const fn: Function = plugin[event];
-      const waitsOn: string[] = Reflect.getMetadata(AfterMetaKey, plugin, event) || [];
-      const blocks: string[] = Reflect.getMetadata(BeforeMetaKey, plugin, event) || [];
+      const waitsOn: any[] = Reflect.getMetadata(AfterMetaKey, plugin, event) || [];
+      const blocks: any[] = Reflect.getMetadata(BeforeMetaKey, plugin, event) || [];
       const eventName: string = `${name}:${event}`;
 
       const node: PhaseGraphNode = this.findOrCreateNode(eventName);
@@ -88,20 +88,27 @@ class BatchLoader {
       // TODO: handle the plugin:* node too
 
       waitsOn.forEach(dep => {
-        const depNode: PhaseGraphNode = this.findOrCreateNode(dep);
-        node.addDependentOn(depNode);
+        const depNode: PhaseGraphNode = this.findOrCreateNode(dep.event);
+
+        if (dep.required) {
+          node.addDependency(depNode);
+        } else {
+          node.addWeakDependency(depNode);
+        }
         node.addArgument(depNode);
-        depNode.addDependencyOf(node);
+        depNode.addDependent(node);
       });
 
       blocks.forEach(dep => {
-        const depNode: PhaseGraphNode = this.findOrCreateNode(dep);
-
-        // TODO: do something if a @Before thing is already loaded
+        const depNode: PhaseGraphNode = this.findOrCreateNode(dep.event);
 
         // TODO: handle the plugin:* case
-        depNode.addDependentOn(node);
-        node.addDependencyOf(depNode);
+        if (dep.required) {
+          node.addDependent(depNode);
+        } else {
+          node.addWeakDependent(depNode);
+        }
+        depNode.addDependency(node);
       });
     });
 
@@ -130,40 +137,33 @@ class BatchLoader {
   }
 
   private determineOrder(): PhaseGraphNode[][] {
-    this.checkForUnclaimed();
+    let nodes = this.graphNodes.filter(node => !node.isUnclaimed() || node.isRequired());
+    this.checkForUnclaimed(nodes);
 
-    let nodes = this.graphNodes.slice();
     let execStack: PhaseGraphNode[][] = [];
+    let readyNodes: PhaseGraphNode[] = [];
 
-    // first, gather everything with no deps. optimization basically
-
-    // now gather everything with reqs
     while (nodes.length) {
-      let groupStack = [];
-
       const preLength = nodes.length;
-      const foundNodes = nodes.filter(node => node.isLeaf());
+      let foundNodes = nodes.filter(node => node.wouldBeReady(readyNodes, false));
       if (foundNodes.length === 0) {
-        // TODO: is it possible to find these?
-        throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
+        // next, try if any nodes were not required
+        foundNodes = nodes.filter(node => node.wouldBeReady(readyNodes, true));
       }
 
-      foundNodes.forEach(node => {
-        // remove the links to the foundNodes
-        const deps = node.getDependencies();
-        deps.forEach(dep => dep.removeDependent(node));
-
-        // and also add to the execStack
-        groupStack.push(node);
-      });
+      if (foundNodes.length === 0) {
+        console.log(nodes);
+        throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
+      }
 
       // remove the foundNodes from the list of graphNodes
       nodes = nodes.filter(node => foundNodes.indexOf(node) === -1);
 
-      execStack.push(groupStack);
+      execStack.push(foundNodes);
+      readyNodes = readyNodes.concat(foundNodes);
     }
 
-    execStack.reverse();
+    // execStack.reverse();
     return execStack;
   }
 
@@ -183,10 +183,8 @@ class BatchLoader {
     }
   }
 
-  private checkForUnclaimed() {
-    const unclaimed: PhaseGraphNode[] = this
-      .graphNodes
-      .filter(node => node.isUnclaimed());
+  private checkForUnclaimed(nodes: PhaseGraphNode[]) {
+    const unclaimed: PhaseGraphNode[] = nodes.filter(node => node.isUnclaimed() && node.isRequired());
 
     if (unclaimed.length) {
       const missingNames: string = unclaimed.map(node => node.toString()).join(', ');
