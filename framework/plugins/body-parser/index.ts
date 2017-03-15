@@ -25,10 +25,10 @@ export default class BodyParser {
 
         const app = PluginManager.getService('express');
 
-        if (config.get('expressBody.enableUrlEncoded')) {
+        if (config.get('expressBody:enableUrlEncoded')) {
             app.use(bodyParser.urlencoded({ extended: true }));
         }
-        if (config.get('expressBody.enableJson')) {
+        if (config.get('expressBody:enableJson')) {
             app.use(bodyParser.json());
         }
     }

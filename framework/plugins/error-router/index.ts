@@ -12,12 +12,14 @@ import { NotFoundError } from '../../errors/notfound';
 export default class ErrorRouter {
     @InitPhase
     @After('Config:load')
+    @After('Winston:load')
     @After('Express:load')
     @Before('Express:run')
     load() {
         console.log('load error routes');
 
         const config = PluginManager.getService('config');
+        const winston = PluginManager.getService('logger');
 
         config.defaults({
             errorRouter: {
@@ -26,7 +28,7 @@ export default class ErrorRouter {
         });
 
         const app = PluginManager.getService('express');
-        app.set('redirectOn401', config.get('errorRouter.redirectOn401'));
+        app.set('redirectOn401', config.get('errorRouter:redirectOn401'));
 
         // set up our general 404 error handler
         app.use(function(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -35,6 +37,6 @@ export default class ErrorRouter {
         });
 
         // the catch all and, general error handler. use next(err) to send it through this
-        app.use(require('./error-handler'));
+        app.use(require('./error-handler')(winston));
     }
 }

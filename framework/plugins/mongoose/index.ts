@@ -19,14 +19,14 @@ export default class Mongoose {
             server: undefined
         };
 
-        const sslCertLocation = config.get('mongo.sslFile');
+        const sslCertLocation = config.get('mongo:sslFile');
         if (sslCertLocation) {
             options.server = {
                 sslCert: fs.readFileSync('./mongo.cert')
             };
         }
 
-        const connectString = config.get('mongo.connectString');
+        const connectString = config.get('mongo:connectString');
 
         if (!connectString) {
             return Promise.reject('Missing config for mongo.connectString');

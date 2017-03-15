@@ -25,7 +25,7 @@ export default class ExpressSecurity {
             }
         });
 
-        const requireHttps = config.get('expressSecurity.requireHttps');
+        const requireHttps = config.get('expressSecurity:requireHttps');
         if (requireHttps === true || requireHttps === 'true') {
             app.use(function(req, res, next) {
                 if (req.headers['x-forwarded-proto'] !== 'https') {

@@ -49,13 +49,17 @@ export default class RouteLoader {
             }
         });
 
-        const basedir = path.resolve(config.get('expressControllers.directory'));
+        const basedir = path.resolve(config.get('expressControllers:directory'));
         const router = express.Router();
 
         const files = fs.readdirSync(basedir);
 
         files.forEach((file) => {
-            const filepath = basedir + file;
+            const filepath = path.resolve(basedir, file);
+
+            if (file.length < 4 || file.substring(file.length - 3) !== '.js') {
+                return;
+            }
 
             const fstats = fs.lstatSync(filepath);
 
@@ -63,7 +67,7 @@ export default class RouteLoader {
                 return;
             }
 
-            const ControllerClass = require(filepath);
+            const ControllerClass = require(filepath).default;
             const controller = new ControllerClass();
 
             for (const prop in controller) {

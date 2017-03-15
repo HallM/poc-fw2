@@ -30,7 +30,7 @@ export default class DustView {
 
         app.engine('dust', cons.dust);
         app.set('view engine', 'dust');
-        app.set('views', config.get('expressDust.viewDirectory'));
+        app.set('views', config.get('expressDust:viewDirectory'));
 
         // pre-initialize the dust renderer. necessary because it's possible we send an email before someone loads a page
         cons.dust.render('notatemplate', {

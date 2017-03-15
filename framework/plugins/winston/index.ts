@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import winston from 'winston';
+import * as winston from 'winston';
 
 @Plugin
 export default class Winston {
@@ -21,7 +21,7 @@ export default class Winston {
             }
         });
 
-        winston.level = config.get('winston.logLevel');
+        winston.level = config.get('winston:logLevel');
         PluginManager.exposeService('logger', winston);
     }
 }

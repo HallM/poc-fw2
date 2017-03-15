@@ -37,10 +37,10 @@ export default class ExpressWinston {
 
             return expressWinston.logger({
                 winstonInstance: winston,
-                statusLevels: !!config.get('expressWinston.statusLevels'),
-                expressFormat: !!config.get('expressWinston.expressLog'),
-                msg: config.get('expressWinston.template'),
-                meta: !!config.get('expressWinston.metaLog')
+                statusLevels: !!config.get('expressWinston:statusLevels'),
+                expressFormat: !!config.get('expressWinston:expressLog'),
+                msg: config.get('expressWinston:template'),
+                meta: !!config.get('expressWinston:metaLog')
             })(req, res, next);
         });
     }
