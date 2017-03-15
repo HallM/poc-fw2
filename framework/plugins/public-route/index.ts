@@ -7,12 +7,15 @@ import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../.
 import * as express from 'express';
 
 @Plugin
-export default class StaticRoutes {
+export default class PublicRoute {
     @InitPhase
     @After('Express:load')
     @After('ExpressCompression:load')
+    @Before('ExpressSession:load')
+    @Before('ExpressWinston:load')
+    @Before('Express:run')
     load() {
-        console.log('load static routes');
+        console.log('load public-directory static route');
         const app = PluginManager.getService('express');
         app.use(express.static('public'));
     }

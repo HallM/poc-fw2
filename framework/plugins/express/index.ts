@@ -18,11 +18,18 @@ export default class Express {
     }
 
     @InitPhase
+    @After('Config:load')
     @After('Express:load')
     run() {
+        const config = PluginManager.getService('config');
+
+        config.defaults({
+            PORT: 3000
+        });
+
         return new Promise(resolve => {
-            var port = process.env.PORT || 3000;
-            var server = this.app.listen(port, function() {
+            const port = config.get('PORT');
+            const server = this.app.listen(port, function() {
                 console.log('App listening on port %s', port);
                 resolve(server);
             });

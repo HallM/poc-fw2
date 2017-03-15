@@ -25,6 +25,6 @@ export default class ErrorRouter {
         });
 
         // the catch all and, general error handler. use next(err) to send it through this
-        app.use(require(__dirname + '/error-handler'));
+        app.use(require('./error-handler'));
     }
 }

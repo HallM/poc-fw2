@@ -9,10 +9,19 @@ var winston = require('winston');
 @Plugin
 export default class Winston {
     @InitPhase
+    @After('Config:load')
     load() {
         console.log('load Winston');
 
-        winston.level = nconf.get('logLevel');
+        const config = PluginManager.getService('config');
+
+        config.defaults({
+            winston: {
+                logLevel: 'info'
+            }
+        });
+
+        winston.level = config.get('winston.logLevel');
         PluginManager.exposeService('logger', winston);
     }
 }

@@ -30,7 +30,7 @@ export default class PassportLocalMongoose {
     load() {
         console.log('load Passport');
 
-        const LoginLocker = require('./LoginLocker');
+        const LoginLocker = require('./login-locker');
 
         const app = PluginManager.getService('express');
 

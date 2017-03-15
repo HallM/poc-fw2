@@ -131,7 +131,10 @@ export default class RouteLoader {
     @InitPhase
     @After('Express:load')
     @After('BodyParser:load')
-    @After('HttpSessions:load')
+    @After('ExpressSecurity:load')
+    @After('ExpressSession:load')
+    @After('PublicRoute:load')
+    @After('PassportLocalMongoose:load')
     @Before('ErrorRouter:load')
     @Before('Express:run')
     load() {

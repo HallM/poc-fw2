@@ -15,7 +15,7 @@ interface ViewModelInterface {
 }
 
 @Plugin
-export default class ViewEngine {
+export default class LisplateView {
     @InitPhase
     @After('Express:load')
     @Before('ExpressCompression:load')
