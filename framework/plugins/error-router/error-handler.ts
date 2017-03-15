@@ -1,9 +1,9 @@
 'use strict';
 
 import logger from 'winston';
-import http from 'http';
-import fs from 'fs';
-import path from 'path';
+import * as http from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 
 function _determineLogMessage(data, defaultMessage) {
   if (!data) {
@@ -105,7 +105,7 @@ function findExistingErrorPage(viewsDir, possibleViews, done) {
     const view = possibleViews.shift();
     const viewPath = path.resolve(viewsDir, view + '.dust');
 
-    fs.access(viewPath, fs.constants.R_OK, (err) => {
+    fs.access(viewPath, fs.R_OK, (err) => {
       if (err) {
         // if cannot access that one, then try the next one
         findExistingErrorPage(viewsDir, possibleViews, done);

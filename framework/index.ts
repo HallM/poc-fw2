@@ -24,14 +24,16 @@ PluginManager.batchLoad(() => {
     require('./plugins/public-route/');
     require('./plugins/winston/');
 
-    // require('./plugins/email-service/');
     // require('./plugins/express-mongoose-session/');
     // require('./plugins/mongoose/');
     // require('./plugins/passport/');
     // require('./plugins/passport-local-mongoose/');
+    require('./plugins/express-controllers/');
+
+    // require('./plugins/email-service/');
     // require('./plugins/rackspace-uploads/');
 }).then(() => {
-    console.log('Server is ready')
+    console.log('Server is ready');
 }).catch((err) => {
     console.log(err);
 });

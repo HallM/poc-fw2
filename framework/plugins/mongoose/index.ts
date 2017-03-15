@@ -5,7 +5,7 @@
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 import mongoose from 'mongoose';
-import fs from 'fs';
+import * as fs from 'fs';
 
 @Plugin
 export default class Mongoose {

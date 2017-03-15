@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import bodyParser from 'body-parser';
+import * as bodyParser from 'body-parser';
 
 @Plugin
 export default class BodyParser {

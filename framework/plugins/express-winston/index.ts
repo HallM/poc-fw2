@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import expressWinston from 'express-winston';
+import * as expressWinston from 'express-winston';
 
 @Plugin
 export default class ExpressWinston {

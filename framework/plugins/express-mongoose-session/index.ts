@@ -5,7 +5,7 @@
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
 import mongoose from 'mongoose';
-import session from 'express-session';
+import * as session from 'express-session';
 import * as ConnectMongo from 'connect-mongo';
 
 const MongoStore = ConnectMongo(session);

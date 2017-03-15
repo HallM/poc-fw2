@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import compression from 'compression';
+import * as compression from 'compression';
 
 @Plugin
 export default class ExpressCompression {

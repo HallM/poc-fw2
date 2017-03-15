@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import nconf from 'nconf';
+import * as nconf from 'nconf';
 
 @Plugin
 export default class Config {

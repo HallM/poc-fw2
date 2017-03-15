@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import passport from 'passport';
+import * as passport from 'passport';
 import generalLogin from './general-login'
 
 @Plugin

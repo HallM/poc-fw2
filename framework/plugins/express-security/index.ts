@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import csrf from 'csrf';
+import * as csrf from 'csrf';
 
 @Plugin
 export default class ExpressSecurity {

@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-import session from 'express-session';
+import * as session from 'express-session';
 
 @Plugin
 export default class ExpressSession {

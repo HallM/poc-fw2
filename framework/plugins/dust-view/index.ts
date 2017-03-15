@@ -8,7 +8,7 @@ import { ReqParamMetaKey } from '../../decorators/req-param';
 import * as path from 'path';
 import * as express from 'express';
 
-import cons from 'consolidate';
+import * as cons from 'consolidate';
 
 @Plugin
 export default class DustView {
