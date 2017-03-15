@@ -4,9 +4,11 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-var mongoose = require('mongoose');
-var session = require('express-session');
-var MongoStore = require('connect-mongo')(session);
+import mongoose from 'mongoose';
+import session from 'express-session';
+import * as ConnectMongo from 'connect-mongo';
+
+const MongoStore = ConnectMongo(session);
 
 @Plugin
 export default class ExpressMongooseSession {

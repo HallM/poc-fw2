@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-const csrf = require('csurf');
+import csrf from 'csrf';
 
 @Plugin
 export default class ExpressSecurity {

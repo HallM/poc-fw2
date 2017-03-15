@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-var compression = require('compression');
+import compression from 'compression';
 
 @Plugin
 export default class ExpressCompression {

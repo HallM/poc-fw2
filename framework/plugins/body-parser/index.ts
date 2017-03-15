@@ -4,16 +4,32 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-var bodyParser = require('body-parser');
+import bodyParser from 'body-parser';
 
 @Plugin
 export default class BodyParser {
     @InitPhase
     @After('Express:load')
+    @After('Config:load')
     load() {
         console.log('load body parser');
+
+        const config = PluginManager.getService('config');
+
+        config.defaults({
+            expressBody: {
+                enableUrlEncoded: true,
+                enableJson: true
+            }
+        });
+
         const app = PluginManager.getService('express');
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+
+        if (config.get('expressBody.enableUrlEncoded')) {
+            app.use(bodyParser.urlencoded({ extended: true }));
+        }
+        if (config.get('expressBody.enableJson')) {
+            app.use(bodyParser.json());
+        }
     }
 }

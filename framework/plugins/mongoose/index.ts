@@ -4,8 +4,8 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-const mongoose = require('mongoose');
-const fs = require('fs');
+import mongoose from 'mongoose';
+import fs from 'fs';
 
 @Plugin
 export default class Mongoose {

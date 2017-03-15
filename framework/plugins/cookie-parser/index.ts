@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-var cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 
 @Plugin
 export default class CookieParser {

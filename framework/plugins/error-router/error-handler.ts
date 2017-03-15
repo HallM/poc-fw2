@@ -1,10 +1,9 @@
 'use strict';
 
-const logger = require('winston');
-const nconf = require('nconf');
-const http = require('http');
-const fs = require('fs');
-const path = require('path');
+import logger from 'winston';
+import http from 'http';
+import fs from 'fs';
+import path from 'path';
 
 function _determineLogMessage(data, defaultMessage) {
   if (!data) {
@@ -25,7 +24,7 @@ module.exports = function generalErrorHandler(err, req, res, _next) {
       return res.send('You must be logged in');
     }
     req.session.redirectto = req.path;
-    return res.redirect(nconf.get('redirectOn401'));
+    return res.redirect(req.app.get('redirectOn401'));
   }
 
   const defaultMessage = http.STATUS_CODES[statusCode] || http.STATUS_CODES[500];

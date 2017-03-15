@@ -22,7 +22,6 @@ PluginManager.batchLoad(() => {
     require('./plugins/express-session/');
     require('./plugins/express-winston/');
     require('./plugins/public-route/');
-    // require('./plugins/route-loader/');
     require('./plugins/winston/');
 
     // require('./plugins/email-service/');

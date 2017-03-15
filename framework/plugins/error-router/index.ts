@@ -11,12 +11,22 @@ import { NotFoundError } from '../../errors/notfound';
 @Plugin
 export default class ErrorRouter {
     @InitPhase
+    @After('Config:load')
     @After('Express:load')
     @Before('Express:run')
     load() {
         console.log('load error routes');
 
+        const config = PluginManager.getService('config');
+
+        config.defaults({
+            errorRouter: {
+                redirectOn401: '/login'
+            }
+        });
+
         const app = PluginManager.getService('express');
+        app.set('redirectOn401', config.get('errorRouter.redirectOn401'));
 
         // set up our general 404 error handler
         app.use(function(req: express.Request, res: express.Response, next: express.NextFunction) {

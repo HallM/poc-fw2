@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-var winston = require('winston');
+import winston from 'winston';
 
 @Plugin
 export default class Winston {

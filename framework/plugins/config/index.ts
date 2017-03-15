@@ -4,7 +4,7 @@
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
 
-const nconf = require('nconf');
+import nconf from 'nconf';
 
 @Plugin
 export default class Config {
