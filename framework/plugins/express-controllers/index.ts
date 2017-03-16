@@ -26,7 +26,7 @@ import * as fs from 'fs';
 import * as express from 'express';
 
 @Plugin
-export default class RouteLoader {
+export default class ExpressControllers {
     @InitPhase
     @GetProvider('logger')
     @GetProvider('config')

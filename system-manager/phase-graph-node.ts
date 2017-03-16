@@ -55,6 +55,11 @@ export class PhaseGraphNode {
     }
 
     addWeakDependency(node: PhaseGraphNode) {
+        // make sure our new dependency is not dependent on self
+        if (node.isDependentOn(this.toString())) {
+            throw new Error(`Circular dependencies detected between "${node.toString()}" and ${this.toString()}`);
+        }
+
         if (this.dependencies.indexOf(node) === -1) {
             this.dependencies.push(node);
         }
@@ -66,6 +71,11 @@ export class PhaseGraphNode {
     }
 
     addWeakDependent(node: PhaseGraphNode) {
+        // make sure our new dependent (who needs us) does not have self as a dependency
+        if (node.isDepedencyOf(this.toString())) {
+            throw new Error(`Circular dependencies detected between "${node.toString()}" and ${this.toString()}`);
+        }
+
         if (this.dependents.indexOf(node) === -1) {
             this.dependents.push(node);
         }
@@ -94,13 +104,12 @@ export class PhaseGraphNode {
         return event === this.eventName;
     }
 
+    // while this could go infinite loop, the addDependency/addDependent should protect against this
     isDepedencyOf(event: string): boolean {
-        // TODO: infinity loop when circular dependency
         return this.isSelf(event) || this.dependents.some(link => link.isDepedencyOf(event));
     }
 
     isDependentOn(event: string): boolean {
-        // TODO: infinity loop when circular dependency
         return this.isSelf(event) || this.dependencies.some(link => link.isDependentOn(event));
     }
 

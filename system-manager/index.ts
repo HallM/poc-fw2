@@ -50,7 +50,6 @@ function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
       }
 
       if (!result) {
-        // TODO: an error, because we promised we would provide!
         throw new Error(`${node.toString()} did not provide the promised services: "${provides.join(', ')}"`);
       }
 
@@ -89,6 +88,18 @@ class BatchLoader {
       this.resolver = resolve;
       this.rejecter = reject;
     });
+  }
+
+  linkDependentToDependency(dependent: string, dependency: string, required: boolean = true) {
+    const dependentNode: PhaseGraphNode = this.findOrCreateNode(dependent);
+    const dependencyNode: PhaseGraphNode = this.findOrCreateNode(dependency);
+
+    if (required) {
+      dependentNode.addDependency(dependencyNode);
+    } else {
+      dependentNode.addWeakDependency(dependencyNode);
+    }
+    dependencyNode.addDependent(dependentNode);
   }
 
   addPlugin(PluginClass: any): Promise<any> {

@@ -5,10 +5,8 @@
         "experimentalDecorators": true
     },
     "exclude": [
-        "old_plugins",
-        "example",
+        "old",
         "node_modules",
-        "rememberance",
         "typings"
     ]
 }

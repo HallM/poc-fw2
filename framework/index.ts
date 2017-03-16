@@ -15,7 +15,7 @@ import * as path from 'path';
 
 // this is really just a bundle of things
 
-PluginManager.batchLoad(() => {
+PluginManager.batchLoad((batchLoader) => {
     require('./plugins/config/');
     require('./plugins/express/');
     require('./plugins/body-parser/');
@@ -29,13 +29,16 @@ PluginManager.batchLoad(() => {
     require('./plugins/public-route/');
     require('./plugins/logger/');
 
+    require('./plugins/express-controllers/');
     // require('./plugins/express-mongoose-session/');
     // require('./plugins/mongoose/');
     // require('./plugins/passport/');
     // require('./plugins/passport-mongoose-provider/');
     // require('./plugins/passport-local/');
     // require('./plugins/passport-rememberme/');
-    require('./plugins/express-controllers/');
+
+    // batchLoader.linkDependentToDependency('ExpressControllers:load', 'PassportLocal:load');
+    // batchLoader.linkDependentToDependency('ExpressControllers:load', 'PassportRememberme:load');
 
     // require('./plugins/email-service/');
     // require('./plugins/rackspace-uploads/');
