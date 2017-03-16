@@ -15,21 +15,15 @@ export default class ExpressSession {
     @GetProvider('sessionStore', false)
     @After('CookieParser:load')
     @After('PublicRoute:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(config, logger, app, sessionStore) {
         logger.debug('load sessions');
-
-        const app = PluginManager.getService('express');
-        const sessionStore = PluginManager.getService('sessionStore') || (new session.MemoryStore());
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             sessionSecret: 'iamakeyboardcatbutnotreally'
         });
 
         app.use(session({
-            store: sessionStore,
+            store: sessionStore || (new session.MemoryStore()),
             secret: config.get('sessionSecret'),
             resave: true,
             saveUninitialized: true

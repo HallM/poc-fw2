@@ -11,8 +11,7 @@ export default class Express {
     @InitPhase
     @GetProvider('logger')
     @Provides('express')
-    create() {
-        const logger = PluginManager.getService('logger');
+    create(logger) {
         logger.debug('load express');
 
         const app = express();
