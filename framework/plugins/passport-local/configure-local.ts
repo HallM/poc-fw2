@@ -3,24 +3,16 @@ import passport from 'passport';
 import { Strategy } from 'passport-local';
 import bcrypt from 'bcrypt';
 
-import LoginLocker from './login-locker';
-import RememberToken from './remember-token';
+export default function(app, PassportProvider, settings) {
+    async function checkUser(req, username, password) {
+        const email = username.toLowerCase();
 
-export default function(app, User, settings) {
-    async function checkUser(req, email, password) {
-        const lowerEmail = email.toLowerCase();
-
-        let [user, lockInfo] = await Promise.all([
-            User.findOne({
-                email: lowerEmail,
-                role: {$ne: 'noaccess'},
-                deactivatedat: null
-            }),
-
-            LoginLocker.findOne({email: lowerEmail})
+        let [user, isLocked] = await Promise.all([
+            PassportProvider.findUserForLogin('email', email),
+            PassportProvider.isLockedOut('email', email)
         ]);
 
-        if (lockInfo && lockInfo.lockedUntil && new Date() <= lockInfo.lockedUntil) {
+        if (isLocked) {
             // do absolutely nothing if locked
             return false;
         }
@@ -31,29 +23,19 @@ export default function(app, User, settings) {
         const isValid = await bcrypt.compare(password, checkPassword);
 
         if (isValid) {
-            if (lockInfo) {
-                lockInfo.failedCount = 0;
-                await lockInfo.save();
-            }
+            await PassportProvider.clearUserLockout('email', email);
 
             return user;
         } else {
-            if (!lockInfo) {
-                lockInfo = new LoginLocker();
-            }
-            // TODO: can we make this atomic?
-            lockInfo.failedCount += 1;
-
             const maxFailTries = parseInt(settings.maxFailTries, 10);
             const maxLockTime = parseInt(settings.maxLockTime, 10);
-            if (lockInfo.failedCount > maxFailTries) {
-                lockInfo.lockedUntil = Math.min(
-                    maxLockTime,
-                    Math.pow(lockInfo.failedCount - maxFailTries, 2) * 5
-                );
-            }
 
-            await lockInfo.save();
+            await PassportProvider.incrementLockOut('email', email, maxFailTries, function(failedCount) {
+                return Math.min(
+                    maxLockTime,
+                    Math.pow(failedCount - maxFailTries, 2) * 5
+                );
+            });
             return false;
         }
     }

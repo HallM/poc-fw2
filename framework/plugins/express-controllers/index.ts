@@ -11,15 +11,15 @@
 'use strict';
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
-import { ReqParamMetaKey } from '../../decorators/req-param';
-import { UrlHandlerMetaKey } from '../../decorators/url-handler';
-import { MiddlewareMetaKey } from '../../decorators/middleware';
-import { MethodMetaKey } from '../../decorators/method';
+import { ReqParamMetaKey } from './decorators/req-param';
+import { UrlHandlerMetaKey } from './decorators/url-handler';
+import { MiddlewareMetaKey } from './decorators/middleware';
+import { MethodMetaKey } from './decorators/method';
 
-export { Query, Param, Header, Body } from '../../decorators/req-param';
-export { UrlHandler } from '../../decorators/url-handler';
-export { Middleware } from '../../decorators/middleware';
-export { Method } from '../../decorators/method';
+export { Query, Param, Header, Body } from './decorators/req-param';
+export { UrlHandler } from './decorators/url-handler';
+export { Middleware } from './decorators/middleware';
+export { Method } from './decorators/method';
 
 import * as path from 'path';
 import * as fs from 'fs';

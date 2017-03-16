@@ -10,22 +10,20 @@ import configureLocal from './configure-local';
 import configureToken from './configure-token';
 
 @Plugin
-export default class PassportLocalMongoose {
+export default class PassportLocal {
     @InitPhase
-    @After('ExpressMongooseSession:load')
-    @After('Mongoose:load')
+    @After('ExpressSession:load')
     @After('Passport:load')
     load() {
-        console.log('load Passport');
+        console.log('load Passport-local');
 
         const config = PluginManager.getService('config');
 
         config.defaults({
-            passportLocalMongoose: {
+            passportLocal: {
                 loginPostRoute: '/auth/login',
                 tokenPostRoute: '/auth/token',
 
-                enableRememberMe: true,
                 enableTokenLogin: true,
 
                 postLoginUrl: '/admin/',
@@ -40,26 +38,33 @@ export default class PassportLocalMongoose {
             }
         });
 
-        const settings = config.get('passportLocalMongoose');
-        const User = PluginManager.getService('user-model');
+        const settings = config.get('passportLocal');
+        const PassportProvider = PluginManager.getService('passport-provider');
         const app = PluginManager.getService('express');
 
         passport.serializeUser(function serializeUser(user, done) {
-            // TODO: can we add a hook to serialize more depending on user input?
-           done(null, user.id);
+            const info = PassportProvider.serializeUserToSession(user);
+            done(null, info);
         });
 
-        passport.deserializeUser(function deserializeUser(req, userid, done) {
-            User.findOne({id: userid}, function(err, user) {
-                done(err, user);
-            });
+        passport.deserializeUser(function deserializeUser(req, info, done) {
+            PassportProvider.deserializeUserFromSession(info).then((user) => {
+                done(null, user);
+            }).catch(done);
         });
 
-        configureLocal(app, User, settings);
+        configureLocal(app, PassportProvider, settings);
 
         if (settings.enableTokenLogin) {
-            configureToken(app, User, settings);
+            configureToken(app, PassportProvider, settings);
         }
 
+        app.get('/logout', function(req, res) {
+            res.clearCookie('remember_me');
+            req.logout();
+            req.session.destroy(function() {
+                res.okRedirect(settings.postLogoutUrl, {status: true});
+            });
+        });
     }
 }

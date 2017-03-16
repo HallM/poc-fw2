@@ -3,7 +3,6 @@
 'use strict';
 
 import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
-import { ReqParamMetaKey } from '../../decorators/req-param';
 
 import * as path from 'path';
 import * as express from 'express';

@@ -5,6 +5,11 @@
 import { PluginManager } from '../system-manager/';
 export { PluginManager } from '../system-manager/';
 
+export { Query, Param, Header, Body } from './plugins/express-controllers/decorators/req-param';
+export { UrlHandler } from './plugins/express-controllers/decorators/url-handler';
+export { Middleware } from './plugins/express-controllers/decorators/middleware';
+export { Method } from './plugins/express-controllers/decorators/method';
+
 import * as fs from 'fs';
 import * as path from 'path';
 

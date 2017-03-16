@@ -3,25 +3,16 @@ import passport from 'passport';
 import { Strategy } from 'passport-local';
 import bcrypt from 'bcrypt';
 
-import LoginLocker from './login-locker';
-import RememberToken from './remember-token';
+export default function(app, PassportProvider, settings) {
+    async function checkUser(req, username, token) {
+        const email = username.toLowerCase();
 
-export default function(app, User, settings) {
-    async function checkUser(req, email, token) {
-        const lowerEmail = email.toLowerCase();
-
-        let [user, lockInfo] = await Promise.all([
-            User.findOne({
-            email: lowerEmail,
-            role: {$ne: 'noaccess'},
-            deactivatedat: null,
-            tokenexpire: {$gte: new Date()}
-            }),
-
-            LoginLocker.findOne({email: lowerEmail})
+        let [user, isLocked] = await Promise.all([
+            PassportProvider.findUserForToken('email', email),
+            PassportProvider.isLockedOut('email', email)
         ]);
 
-        if (lockInfo && lockInfo.lockedUntil && new Date() <= lockInfo.lockedUntil) {
+        if (isLocked) {
             // do absolutely nothing if locked
             return false;
         }
@@ -34,9 +25,10 @@ export default function(app, User, settings) {
             return false;
         }
 
-        user.logintoken = null;
-        user.tokenexpire = null;
-        await user.save();
+        await PassportProvider.alterUser(user, {
+            logintoken: null,
+            tokenexpire: null
+        });
 
         return user;
     }

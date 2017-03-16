@@ -9,7 +9,7 @@ import * as express from 'express';
 export function Middleware(middleware: express.Handler) {
     return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
         let existing: any[] = Reflect.getOwnMetadata(MiddlewareMetaKey, target, propertyKey) || [];
-        existing.push(middleware);
+        existing.splice(0, 0, middleware);
         Reflect.defineMetadata(MiddlewareMetaKey, existing, target, propertyKey);
     };
 }
