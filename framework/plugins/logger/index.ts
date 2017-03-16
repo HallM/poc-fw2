@@ -2,18 +2,17 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Provides, GetProvider } from '../../../system-manager/';
 
 import * as winston from 'winston';
 
 @Plugin
 export default class Logger {
     @InitPhase
-    @After('Config:load')
-    load() {
+    @GetProvider('config')
+    @Provides('logger')
+    load(config) {
         winston.debug('load Winston');
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             logger: {
@@ -22,6 +21,6 @@ export default class Logger {
         });
 
         winston.level = config.get('logger:logLevel');
-        PluginManager.exposeService('logger', winston);
+        return winston;
     }
 }

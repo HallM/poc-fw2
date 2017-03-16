@@ -7,21 +7,20 @@ export class PhaseGraphNode {
     // points to things that this depends on
     private dependencies: PhaseGraphNode[]
 
-    private argumentNode: PhaseGraphNode[]
+    private getProvider: string[]
+    private provides: string[]
 
     // the function to execute
     private executor: Function
     private target: any
 
-    private returnedValue: any
-
     constructor(public eventName: string, public required: boolean = false) {
         this.dependents = [];
         this.dependencies = [];
-        this.argumentNode = [];
+        this.getProvider = [];
+        this.provides = [];
         this.executor = null;
         this.target = null;
-        this.returnedValue = undefined;
     }
 
     isRequired() {
@@ -39,9 +38,14 @@ export class PhaseGraphNode {
         this.executor = fn;
     }
 
-    addArgument(node: PhaseGraphNode) {
-        if (this.argumentNode.indexOf(node) === -1) {
-            this.argumentNode.splice(0, 0, node);
+    addProvides(serviceName: string) {
+        if (this.provides.indexOf(serviceName) === -1) {
+            this.provides.push(serviceName);
+        }
+    }
+    addGetProvider(serviceName: string) {
+        if (this.getProvider.indexOf(serviceName) === -1) {
+            this.getProvider.push(serviceName);
         }
     }
 
@@ -67,14 +71,15 @@ export class PhaseGraphNode {
         }
     }
 
-    execute() {
-        const args = this.argumentNode.map(node => node.returnedValue);
+    execute(args: any[] = []) {
+        return Promise.resolve(this.executor.apply(this.target, args))
+    }
 
-        return Promise
-            .resolve(this.executor.apply(this.target, args))
-            .then((value) => {
-                this.returnedValue = value;
-            });
+    providesServices(): string[] {
+        return this.provides.slice();
+    }
+    wantsProviders(): string[] {
+        return this.getProvider.slice();
     }
 
     getDependencies(): PhaseGraphNode[] {

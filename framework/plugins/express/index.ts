@@ -2,33 +2,29 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Provides, GetProvider } from '../../../system-manager/';
 
 import * as express from 'express';
 
 @Plugin
 export default class Express {
-    app: any
-
     @InitPhase
-    @After('Logger:load')
-    load() {
+    @GetProvider('logger')
+    @Provides('express')
+    create() {
         const logger = PluginManager.getService('logger');
         logger.debug('load express');
 
-        this.app = express();
-        PluginManager.exposeService('express', this.app);
+        const app = express();
+        return app;
     }
 
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
-    run() {
-        const logger = PluginManager.getService('logger');
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
+    run(logger, config, app) {
         logger.debug('starting express');
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             PORT: 3000
@@ -36,7 +32,7 @@ export default class Express {
 
         return new Promise(resolve => {
             const port = config.get('PORT');
-            const server = this.app.listen(port, function() {
+            const server = app.listen(port, function() {
                 logger.info('App listening on port %s', port);
                 resolve(server);
             });

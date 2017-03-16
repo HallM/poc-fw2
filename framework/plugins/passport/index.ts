@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as passport from 'passport';
 import generalLogin from './general-login'
@@ -10,12 +10,11 @@ import generalLogin from './general-login'
 @Plugin
 export default class Passport {
     @InitPhase
-    @After('Logger:load')
+    @GetProvider('logger')
+    @GetProvider('express')
     @After('ExpressSession:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger, app) {
         logger.debug('load Passport');
-        const app = PluginManager.getService('express');
 
         app.use(passport.initialize());
         app.use(passport.session());

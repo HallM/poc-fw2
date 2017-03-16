@@ -2,25 +2,20 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as expressWinston from 'express-winston';
 
 @Plugin
 export default class ExpressWinston {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('config')
+    @GetProvider('logger')
+    @GetProvider('express')
     @Before('BodyParser:load', false)
     @Before('StaticRoutes:load', false)
-    load() {
-        const winston = PluginManager.getService('logger');
-        winston.debug('load ExpressWinston');
-
-        const app = PluginManager.getService('express');
-
-        const config = PluginManager.getService('config');
+    load(config, logger, app) {
+        logger.debug('load ExpressWinston');
 
         config.defaults({
             expressWinston: {
@@ -37,7 +32,7 @@ export default class ExpressWinston {
             }
 
             return expressWinston.logger({
-                winstonInstance: winston,
+                winstonInstance: logger,
                 statusLevels: !!config.get('expressWinston:statusLevels'),
                 expressFormat: !!config.get('expressWinston:expressLog'),
                 msg: config.get('expressWinston:template'),

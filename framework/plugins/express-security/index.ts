@@ -2,24 +2,19 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as csrf from 'csurf';
 
 @Plugin
 export default class ExpressSecurity {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
     @After('BodyParser:load')
-    @Before('RouteLoader:load', false)
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger, config, app) {
         logger.debug('load express-security');
-
-        const app = PluginManager.getService('express');
-        const config = PluginManager.getService('config');
 
         config.defaults({
             expressSecurity: {

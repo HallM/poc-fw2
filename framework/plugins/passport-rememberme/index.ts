@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import passport from 'passport';
 import { Strategy } from 'passport-remember-me';
@@ -10,18 +10,15 @@ import { Strategy } from 'passport-remember-me';
 @Plugin
 export default class PassportRememberme {
     @InitPhase
-    @After('Logger:load')
+    @GetProvider('config')
+    @GetProvider('logger')
+    @GetProvider('express')
+    @GetProvider('passportimpl')
     @After('ExpressSession:load')
     @After('Passport:load')
     @Before('PassportLocal:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(config, logger, app, PassportProvider) {
         logger.debug('load Passport-rememberme');
-
-        const PassportProvider = PluginManager.getService('passport-provider');
-
-        const app = PluginManager.getService('express');
-        const config = PluginManager.getService('config');
 
         config.defaults({
             passportRememberme: {
@@ -70,16 +67,14 @@ export default class PassportRememberme {
     }
 
     @InitPhase
-    @After('Logger:load')
+    @GetProvider('config')
+    @GetProvider('logger')
+    @GetProvider('express')
     @After('ExpressSession:load')
     @After('Passport:load')
     @After('PassportLocal:load')
-    addHandler() {
-        const logger = PluginManager.getService('logger');
+    addHandler(config, logger, app) {
         logger.debug('Passprort remember-me handler');
-
-        const app = PluginManager.getService('express');
-        const config = PluginManager.getService('config');
 
         if (config.get('passportRememberme:enabled')) {
             app.use(passport.authenticate('remember-me'));

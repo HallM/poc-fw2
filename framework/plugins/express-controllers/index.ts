@@ -10,7 +10,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 import { ReqParamMetaKey } from './decorators/req-param';
 import { UrlHandlerMetaKey } from './decorators/url-handler';
 import { MiddlewareMetaKey } from './decorators/middleware';
@@ -28,9 +28,9 @@ import * as express from 'express';
 @Plugin
 export default class RouteLoader {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
     @After('BodyParser:load')
     @After('ExpressSecurity:load')
     @After('ExpressSession:load')
@@ -38,12 +38,8 @@ export default class RouteLoader {
     // @After('PassportLocalMongoose:load') // TODO: make external
     @Before('ErrorRouter:load')
     @Before('Express:run')
-    load() {
-        const logger = PluginManager.getService('logger');
-        const app = PluginManager.getService('express');
+    load(logger, config, app) {
         logger.debug('load controllers and routes');
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             expressControllers: {

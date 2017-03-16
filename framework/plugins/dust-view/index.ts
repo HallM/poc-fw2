@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as path from 'path';
 import * as express from 'express';
@@ -12,16 +12,12 @@ import * as cons from 'consolidate';
 @Plugin
 export default class DustView {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
     @Before('ExpressCompression:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger, config, app) {
         logger.debug('load view engine');
-
-        const app = PluginManager.getService('express');
-        const config = PluginManager.getService('config');
 
         config.defaults({
             expressDust: {

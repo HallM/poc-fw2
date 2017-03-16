@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import passport from 'passport';
 
@@ -12,14 +12,14 @@ import configureToken from './configure-token';
 @Plugin
 export default class PassportLocal {
     @InitPhase
-    @After('Logger:load')
+    @GetProvider('config')
+    @GetProvider('logger')
+    @GetProvider('express')
+    @GetProvider('passportimpl')
     @After('ExpressSession:load')
     @After('Passport:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(config, logger, app, PassportProvider) {
         logger.debug('load Passport-local');
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             passportLocal: {
@@ -41,8 +41,6 @@ export default class PassportLocal {
         });
 
         const settings = config.get('passportLocal');
-        const PassportProvider = PluginManager.getService('passport-provider');
-        const app = PluginManager.getService('express');
 
         passport.serializeUser(function serializeUser(user, done) {
             const info = PassportProvider.serializeUserToSession(user);

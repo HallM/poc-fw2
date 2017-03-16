@@ -2,20 +2,18 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, GetProvider } from '../../../system-manager/';
 
 import * as cookieParser from 'cookie-parser';
 
 @Plugin
 export default class CookieParser {
     @InitPhase
-    @After('Logger:load')
-    @After('Express:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    @GetProvider('logger')
+    @GetProvider('express')
+    load(logger, app) {
         logger.debug('load cookie parser');
 
-        const app = PluginManager.getService('express');
         app.use(cookieParser());
     }
 }

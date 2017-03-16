@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import mongoose from 'mongoose';
 import * as fs from 'fs';
@@ -10,13 +10,10 @@ import * as fs from 'fs';
 @Plugin
 export default class Mongoose {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    @GetProvider('config')
+    @GetProvider('logger')
+    load(config, logger) {
         logger.debug('load mongoose');
-
-        const config = PluginManager.getService('config');
 
         let options = {
             autoindex: process.env.NODE_ENV !== 'production',

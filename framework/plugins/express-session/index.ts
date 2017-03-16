@@ -2,16 +2,17 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as session from 'express-session';
 
 @Plugin
 export default class ExpressSession {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('config')
+    @GetProvider('logger')
+    @GetProvider('express')
+    @GetProvider('sessionStore', false)
     @After('CookieParser:load')
     @After('PublicRoute:load')
     load() {

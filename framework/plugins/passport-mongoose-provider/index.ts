@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Provides, GetProvider } from '../../../system-manager/';
 
 import * as crypto from 'crypto';
 
@@ -13,12 +13,10 @@ import RememberToken from './remember-token';
 @Plugin
 export default class PassportMongooseProvider {
     @InitPhase
-    @After('Logger:load')
+    @GetProvider('logger')
+    @Provides('passportimpl')
     @After('Mongoose:load')
-    @Before('PassportLocal:load')
-    @Before('PassportRememberme:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger) {
         logger.debug('load Passport provider (mongoose)');
 
         const User = PluginManager.getService('user-model');
@@ -124,6 +122,6 @@ export default class PassportMongooseProvider {
             }
         };
 
-        PluginManager.exposeService('passport-provider', service);
+        return service;
     }
 }

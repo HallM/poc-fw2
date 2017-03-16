@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Provides, GetProvider } from '../../../system-manager/';
 
 import mongoose from 'mongoose';
 import * as session from 'express-session';
@@ -13,14 +13,12 @@ const MongoStore = ConnectMongo(session);
 @Plugin
 export default class ExpressMongooseSession {
     @InitPhase
-    @After('Logger:load')
-    @Before('ExpressSession:load')
+    @GetProvider('logger')
+    @GetProvider('express')
+    @Provides('sessionStore')
     @After('Mongoose:load')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger, app) {
         logger.debug('create mongostore for express-sessions using mongoose');
-
-        const app = PluginManager.getService('express');
 
         const sessionStore = new MongoStore({
             mongooseConnection: mongoose.connection,
@@ -28,6 +26,6 @@ export default class ExpressMongooseSession {
             touchAfter: 3600,
         });
 
-        PluginManager.exposeService('sessionStore', sessionStore);
+        return sessionStore;
     }
 }

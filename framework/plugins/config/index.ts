@@ -2,13 +2,14 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, Provides } from '../../../system-manager/';
 
 import * as nconf from 'nconf';
 
 @Plugin
 export default class Config {
     @InitPhase
+    @Provides('config')
     load() {
         nconf
           .argv()
@@ -16,6 +17,6 @@ export default class Config {
           .file({ file: 'config/config.json' })
           .file({ file: 'config/local.json' });
 
-        PluginManager.exposeService('config', nconf);
+        return nconf;
     }
 }

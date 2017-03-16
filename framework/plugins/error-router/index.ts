@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as express from 'express';
 
@@ -11,15 +11,12 @@ import { NotFoundError } from '../../errors/notfound';
 @Plugin
 export default class ErrorRouter {
     @InitPhase
-    @After('Config:load')
-    @After('Logger:load')
-    @After('Express:load')
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
     @Before('Express:run')
-    load() {
-        const logger = PluginManager.getService('logger');
+    load(logger, config, app) {
         logger.debug('load error routes');
-
-        const config = PluginManager.getService('config');
 
         config.defaults({
             errorRouter: {
@@ -27,7 +24,6 @@ export default class ErrorRouter {
             }
         });
 
-        const app = PluginManager.getService('express');
         app.set('redirectOn401', config.get('errorRouter:redirectOn401'));
 
         // set up our general 404 error handler
