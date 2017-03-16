@@ -9,9 +9,12 @@ import * as compression from 'compression';
 @Plugin
 export default class ExpressCompression {
     @InitPhase
+    @After('Logger:load')
     @After('Express:load')
     load() {
-        console.log('load compression');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load compression');
+
         const app = PluginManager.getService('express');
         app.use(compression());
     }

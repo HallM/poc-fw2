@@ -13,12 +13,14 @@ import * as cons from 'consolidate';
 export default class DustView {
     @InitPhase
     @After('Config:load')
+    @After('Logger:load')
     @After('Express:load')
     @Before('ExpressCompression:load')
     load() {
-        console.log('load view engine');
-        const app = PluginManager.getService('express');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load view engine');
 
+        const app = PluginManager.getService('express');
         const config = PluginManager.getService('config');
 
         config.defaults({

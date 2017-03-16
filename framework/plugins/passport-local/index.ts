@@ -12,10 +12,12 @@ import configureToken from './configure-token';
 @Plugin
 export default class PassportLocal {
     @InitPhase
+    @After('Logger:load')
     @After('ExpressSession:load')
     @After('Passport:load')
     load() {
-        console.log('load Passport-local');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load Passport-local');
 
         const config = PluginManager.getService('config');
 

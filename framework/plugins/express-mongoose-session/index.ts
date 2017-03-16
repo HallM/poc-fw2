@@ -13,10 +13,13 @@ const MongoStore = ConnectMongo(session);
 @Plugin
 export default class ExpressMongooseSession {
     @InitPhase
+    @After('Logger:load')
     @Before('ExpressSession:load')
     @After('Mongoose:load')
     load() {
-        console.log('create mongostore for express-sessions using mongoose');
+        const logger = PluginManager.getService('logger');
+        logger.debug('create mongostore for express-sessions using mongoose');
+
         const app = PluginManager.getService('express');
 
         const sessionStore = new MongoStore({

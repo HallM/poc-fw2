@@ -9,10 +9,12 @@ import * as bodyParser from 'body-parser';
 @Plugin
 export default class BodyParser {
     @InitPhase
+    @After('Logger:load')
     @After('Express:load')
     @After('Config:load')
     load() {
-        console.log('load body parser');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load body parser');
 
         const config = PluginManager.getService('config');
 

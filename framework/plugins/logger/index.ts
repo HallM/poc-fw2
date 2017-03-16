@@ -7,21 +7,21 @@ import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../.
 import * as winston from 'winston';
 
 @Plugin
-export default class Winston {
+export default class Logger {
     @InitPhase
     @After('Config:load')
     load() {
-        console.log('load Winston');
+        winston.debug('load Winston');
 
         const config = PluginManager.getService('config');
 
         config.defaults({
-            winston: {
+            logger: {
                 logLevel: 'info'
             }
         });
 
-        winston.level = config.get('winston:logLevel');
+        winston.level = config.get('logger:logLevel');
         PluginManager.exposeService('logger', winston);
     }
 }

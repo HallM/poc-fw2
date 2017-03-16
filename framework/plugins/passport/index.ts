@@ -10,9 +10,11 @@ import generalLogin from './general-login'
 @Plugin
 export default class Passport {
     @InitPhase
+    @After('Logger:load')
     @After('ExpressSession:load')
     load() {
-        console.log('load Passport');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load Passport');
         const app = PluginManager.getService('express');
 
         app.use(passport.initialize());

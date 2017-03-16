@@ -10,14 +10,15 @@ import * as expressWinston from 'express-winston';
 export default class ExpressWinston {
     @InitPhase
     @After('Config:load')
-    @After('Winston:load')
+    @After('Logger:load')
     @After('Express:load')
     @Before('BodyParser:load', false)
     @Before('StaticRoutes:load', false)
     load() {
-        console.log('load ExpressWinston');
-        const app = PluginManager.getService('express');
         const winston = PluginManager.getService('logger');
+        winston.debug('load ExpressWinston');
+
+        const app = PluginManager.getService('express');
 
         const config = PluginManager.getService('config');
 

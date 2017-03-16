@@ -13,11 +13,13 @@ import RememberToken from './remember-token';
 @Plugin
 export default class PassportMongooseProvider {
     @InitPhase
+    @After('Logger:load')
     @After('Mongoose:load')
     @Before('PassportLocal:load')
     @Before('PassportRememberme:load')
     load() {
-        console.log('load Passport provider (mongoose)');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load Passport provider (mongoose)');
 
         const User = PluginManager.getService('user-model');
 

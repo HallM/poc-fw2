@@ -10,8 +10,6 @@ import * as nconf from 'nconf';
 export default class Config {
     @InitPhase
     load() {
-        console.log('load config');
-
         nconf
           .argv()
           .env()

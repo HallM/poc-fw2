@@ -29,6 +29,7 @@ import * as express from 'express';
 export default class RouteLoader {
     @InitPhase
     @After('Config:load')
+    @After('Logger:load')
     @After('Express:load')
     @After('BodyParser:load')
     @After('ExpressSecurity:load')
@@ -38,8 +39,9 @@ export default class RouteLoader {
     @Before('ErrorRouter:load')
     @Before('Express:run')
     load() {
+        const logger = PluginManager.getService('logger');
         const app = PluginManager.getService('express');
-        console.log('load controllers and routes');
+        logger.debug('load controllers and routes');
 
         const config = PluginManager.getService('config');
 

@@ -38,7 +38,8 @@ PluginManager.batchLoad(() => {
     // require('./plugins/email-service/');
     // require('./plugins/rackspace-uploads/');
 }).then(() => {
-    console.log('Server is ready');
+    const logger = PluginManager.getService('logger');
+    logger.info('Server is ready');
 }).catch((err) => {
-    console.log(err);
+    console.error(err);
 });

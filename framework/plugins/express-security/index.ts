@@ -10,13 +10,15 @@ import * as csrf from 'csurf';
 export default class ExpressSecurity {
     @InitPhase
     @After('Config:load')
+    @After('Logger:load')
     @After('Express:load')
     @After('BodyParser:load')
     @Before('RouteLoader:load', false)
     load() {
-        console.log('load express-security');
-        const app = PluginManager.getService('express');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load express-security');
 
+        const app = PluginManager.getService('express');
         const config = PluginManager.getService('config');
 
         config.defaults({

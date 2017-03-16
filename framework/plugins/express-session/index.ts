@@ -10,11 +10,14 @@ import * as session from 'express-session';
 export default class ExpressSession {
     @InitPhase
     @After('Config:load')
+    @After('Logger:load')
     @After('Express:load')
     @After('CookieParser:load')
     @After('PublicRoute:load')
     load() {
-        console.log('load sessions');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load sessions');
+
         const app = PluginManager.getService('express');
         const sessionStore = PluginManager.getService('sessionStore') || (new session.MemoryStore());
 

@@ -11,7 +11,11 @@ import * as fs from 'fs';
 export default class Mongoose {
     @InitPhase
     @After('Config:load')
+    @After('Logger:load')
     load() {
+        const logger = PluginManager.getService('logger');
+        logger.debug('load mongoose');
+
         const config = PluginManager.getService('config');
 
         let options = {

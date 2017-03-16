@@ -10,12 +10,15 @@ import * as express from 'express';
 export default class PublicRoute {
     @InitPhase
     @After('Express:load')
+    @After('Logger:load')
     @After('ExpressCompression:load')
     @Before('ExpressSession:load')
     @Before('ExpressWinston:load')
     @Before('Express:run')
     load() {
-        console.log('load public-directory static route');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load public-directory static route');
+
         const app = PluginManager.getService('express');
         app.use(express.static('public'));
     }

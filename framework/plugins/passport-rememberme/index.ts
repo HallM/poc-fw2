@@ -10,11 +10,13 @@ import { Strategy } from 'passport-remember-me';
 @Plugin
 export default class PassportRememberme {
     @InitPhase
+    @After('Logger:load')
     @After('ExpressSession:load')
     @After('Passport:load')
     @Before('PassportLocal:load')
     load() {
-        console.log('load Passport-rememberme');
+        const logger = PluginManager.getService('logger');
+        logger.debug('load Passport-rememberme');
 
         const PassportProvider = PluginManager.getService('passport-provider');
 
@@ -68,10 +70,14 @@ export default class PassportRememberme {
     }
 
     @InitPhase
+    @After('Logger:load')
     @After('ExpressSession:load')
     @After('Passport:load')
     @After('PassportLocal:load')
     addHandler() {
+        const logger = PluginManager.getService('logger');
+        logger.debug('Passprort remember-me handler');
+
         const app = PluginManager.getService('express');
         const config = PluginManager.getService('config');
 
