@@ -25,6 +25,8 @@ import { AfterMetaKey } from './decorators/after';
 import { BeforeMetaKey } from './decorators/before';
 import { OnEventMetaKey } from './decorators/on';
 import { InjectServiceMetaKey } from './decorators/inject';
+import { ProvidesMetaKey } from './decorators/provides';
+import { GetProviderMetaKey } from './decorators/get-provider';
 
 export { Plugin } from './decorators/plugin';
 export { InitPhase } from './decorators/init-phase';
@@ -32,13 +34,38 @@ export { After } from './decorators/after';
 export { Before } from './decorators/before';
 export { On } from './decorators/on';
 export { Inject } from './decorators/inject';
+export { Provides } from './decorators/provides';
+export { GetProvider } from './decorators/get-provider';
 
 function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
   let p = Promise.resolve();
   const count = execNodes.length;
 
   return Promise.all(execNodes.map((node) => {
-    return node.execute();
+    const args = node.wantsProviders().map(serviceName => getService(serviceName));
+    return node.execute(args).then((result:any) => {
+      const provides = node.providesServices();
+      if (!provides.length) {
+        return null;
+      }
+
+      if (!result) {
+        throw new Error(`${node.toString()} did not provide the promised services: "${provides.join(', ')}"`);
+      }
+
+      if (provides.length === 1) {
+        exposeService(provides[0], result);
+        return result;
+      } else if (Array.isArray(result) && result.length == provides.length) {
+        provides.forEach((serviceName, index) => {
+          exposeService(serviceName, result[index]);
+        });
+        return result;
+      } else {
+        const start = result && Array.isArray(result) ? result.length : 0;
+        throw new Error(`${node.toString()} did not provide the promised services: "${provides.slice(start).join(', ')}"`);
+      }
+    });
   })).then(() => {
     completedPhases = completedPhases.concat(execNodes);
   });
@@ -48,15 +75,31 @@ class BatchLoader {
   private graphNodes: PhaseGraphNode[]
   finalPromise: Promise<any>
 
+  private serviceToNodeMap: any
+
   private resolver: Function
   private rejecter: Function
 
   constructor() {
     this.graphNodes = [];
+    this.serviceToNodeMap = {};
+
     this.finalPromise = new Promise((resolve, reject) => {
       this.resolver = resolve;
       this.rejecter = reject;
     });
+  }
+
+  linkDependentToDependency(dependent: string, dependency: string, required: boolean = true) {
+    const dependentNode: PhaseGraphNode = this.findOrCreateNode(dependent);
+    const dependencyNode: PhaseGraphNode = this.findOrCreateNode(dependency);
+
+    if (required) {
+      dependentNode.addDependency(dependencyNode);
+    } else {
+      dependentNode.addWeakDependency(dependencyNode);
+    }
+    dependencyNode.addDependent(dependentNode);
   }
 
   addPlugin(PluginClass: any): Promise<any> {
@@ -80,12 +123,14 @@ class BatchLoader {
       const fn: Function = plugin[event];
       const waitsOn: any[] = Reflect.getMetadata(AfterMetaKey, plugin, event) || [];
       const blocks: any[] = Reflect.getMetadata(BeforeMetaKey, plugin, event) || [];
+
+      const provides: any[] = Reflect.getMetadata(ProvidesMetaKey, plugin, event) || [];
+      const provided: any[] = Reflect.getMetadata(GetProviderMetaKey, plugin, event) || [];
+
       const eventName: string = `${name}:${event}`;
 
       const node: PhaseGraphNode = this.findOrCreateNode(eventName);
       node.claimNode(plugin, fn);
-
-      // TODO: handle the plugin:* node too
 
       waitsOn.forEach(dep => {
         const depNode: PhaseGraphNode = this.findOrCreateNode(dep.event);
@@ -95,20 +140,56 @@ class BatchLoader {
         } else {
           node.addWeakDependency(depNode);
         }
-        node.addArgument(depNode);
         depNode.addDependent(node);
       });
 
       blocks.forEach(dep => {
         const depNode: PhaseGraphNode = this.findOrCreateNode(dep.event);
 
-        // TODO: handle the plugin:* case
         if (dep.required) {
           node.addDependent(depNode);
         } else {
           node.addWeakDependent(depNode);
         }
         depNode.addDependency(node);
+      });
+
+      provides.forEach(serviceName => {
+        if (!this.serviceToNodeMap[serviceName]) {
+          this.serviceToNodeMap[serviceName] = {
+            needsService: [],
+            couldWantService: [],
+            providesService: node
+          };
+        } else if (this.serviceToNodeMap[serviceName].providesService == null) {
+          this.serviceToNodeMap[serviceName].providesService = node;
+        } else {
+          const nodeProvided = this.serviceToNodeMap[serviceName].providesService;
+          throw new Error(`${serviceName} was already provided by ${nodeProvided.toString()}`);
+        }
+
+        node.addProvides(serviceName);
+      });
+
+      provided.forEach((serviceInfo) => {
+        const serviceName = serviceInfo.providerName;
+        const isRequired = serviceInfo.required;
+
+        if (!this.serviceToNodeMap[serviceName]) {
+          this.serviceToNodeMap[serviceName] = {
+            needsService: isRequired ? [node] : [],
+            couldWantService: isRequired ? [] : [node],
+            providesService: null
+          };
+        } else {
+          if (isRequired) {
+            this.serviceToNodeMap[serviceName].needsService.push(node);
+          } else {
+            this.serviceToNodeMap[serviceName].couldWantService.push(node);
+          }
+        }
+
+        node.addGetProvider(serviceName);
       });
     });
 
@@ -136,7 +217,40 @@ class BatchLoader {
     return this.finalPromise;
   }
 
+  private addBlocksForProviders() {
+    const unprovidedServices = [];
+    for (const serviceName in this.serviceToNodeMap) {
+      const mapInfo = this.serviceToNodeMap[serviceName];
+
+      if (mapInfo.providesService == null) {
+        if (mapInfo.needsService.length) {
+          unprovidedServices.push(serviceName);
+        }
+        continue;
+      }
+
+      const node: PhaseGraphNode = mapInfo.providesService;
+
+      mapInfo.needsService.forEach((wantingNode: PhaseGraphNode) => {
+        wantingNode.addDependency(node);
+        node.addDependent(wantingNode);
+      });
+
+      mapInfo.couldWantService.forEach((wantingNode: PhaseGraphNode) => {
+        wantingNode.addDependency(node);
+        node.addDependent(wantingNode);
+      });
+    }
+
+    if (unprovidedServices.length) {
+      throw new Error(`The following services were not provided: ${unprovidedServices.join(', ')}`);
+    }
+  }
+
   private determineOrder(): PhaseGraphNode[][] {
+    // be sure to add the blockers for GetProvider
+    this.addBlocksForProviders();
+
     let nodes = this.graphNodes.filter(node => !node.isUnclaimed() || node.isRequired());
     this.checkForUnclaimed(nodes);
 
@@ -152,7 +266,6 @@ class BatchLoader {
       }
 
       if (foundNodes.length === 0) {
-        console.log(nodes);
         throw new Error('Cannot satisfy all dependencies. A circular dependency may exist.');
       }
 

@@ -2,18 +2,29 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, GetProvider } from '../../../system-manager/';
 
-var bodyParser = require('body-parser');
+import * as bodyParser from 'body-parser';
 
 @Plugin
 export default class BodyParser {
     @InitPhase
-    @After('Express:load')
-    load() {
-        console.log('load body parser');
-        const app = PluginManager.getService('express');
-        app.use(bodyParser.urlencoded({ extended: true }));
-        app.use(bodyParser.json());
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
+    load(logger, config, app) {
+        config.defaults({
+            expressBody: {
+                enableUrlEncoded: true,
+                enableJson: true
+            }
+        });
+
+        if (config.get('expressBody:enableUrlEncoded')) {
+            app.use(bodyParser.urlencoded({ extended: true }));
+        }
+        if (config.get('expressBody:enableJson')) {
+            app.use(bodyParser.json());
+        }
     }
 }

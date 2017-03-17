@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
 import * as express from 'express';
 
@@ -11,12 +11,20 @@ import { NotFoundError } from '../../errors/notfound';
 @Plugin
 export default class ErrorRouter {
     @InitPhase
-    @After('Express:load')
+    @GetProvider('logger')
+    @GetProvider('config')
+    @GetProvider('express')
     @Before('Express:run')
-    load() {
-        console.log('load error routes');
+    load(logger, config, app) {
+        logger.debug('load error routes');
 
-        const app = PluginManager.getService('express');
+        config.defaults({
+            errorRouter: {
+                redirectOn401: '/login'
+            }
+        });
+
+        app.set('redirectOn401', config.get('errorRouter:redirectOn401'));
 
         // set up our general 404 error handler
         app.use(function(req: express.Request, res: express.Response, next: express.NextFunction) {
@@ -25,6 +33,6 @@ export default class ErrorRouter {
         });
 
         // the catch all and, general error handler. use next(err) to send it through this
-        app.use(require(__dirname + '/error-handler'));
+        app.use(require('./error-handler')(logger));
     }
 }

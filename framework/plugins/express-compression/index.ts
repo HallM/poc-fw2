@@ -2,17 +2,18 @@
 
 'use strict';
 
-import { PluginManager, Plugin, InitPhase, After, Before, Inject } from '../../../system-manager/';
+import { PluginManager, Plugin, InitPhase, After, Before, GetProvider } from '../../../system-manager/';
 
-var compression = require('compression');
+import * as compression from 'compression';
 
 @Plugin
 export default class ExpressCompression {
     @InitPhase
-    @After('Express:load')
-    load() {
-        console.log('load compression');
-        const app = PluginManager.getService('express');
+    @GetProvider('logger')
+    @GetProvider('express')
+    load(logger, app) {
+        logger.debug('load compression');
+
         app.use(compression());
     }
 }

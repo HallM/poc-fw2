@@ -5,9 +5,8 @@
         "experimentalDecorators": true
     },
     "exclude": [
-        "example",
+        "old",
         "node_modules",
-        "rememberance",
         "typings"
     ]
 }
