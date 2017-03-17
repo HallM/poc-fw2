@@ -18,7 +18,7 @@ import * as path from 'path';
 import autoRoutes from './auto-routes';
 
 @Plugin
-export default class ExpressControllers {
+export default class DustExpressAutoRoutes {
     @InitPhase
     @GetProvider('logger')
     @GetProvider('config')

@@ -47,24 +47,97 @@ export default class ExpressControllers {
         });
 
         const basedir = path.resolve(config.get('expressControllers:directory'));
-        const router = express.Router();
+        // const router = express.Router();
 
-        const files = fs.readdirSync(basedir);
+        // const files = fs.readdirSync(basedir);
 
-        files.forEach((file) => {
-            const filepath = path.resolve(basedir, file);
+        // files.forEach((file) => {
+        //     const filepath = path.resolve(basedir, file);
 
-            if (file.length < 4 || file.substring(file.length - 3) !== '.js') {
+        //     if (file.length < 4 || file.substring(file.length - 3) !== '.js') {
+        //         return;
+        //     }
+
+        //     const fstats = fs.lstatSync(filepath);
+
+        //     if (!fstats.isFile()) {
+        //         return;
+        //     }
+
+        //     const ControllerClass = require(filepath).default;
+        //     const controller = new ControllerClass();
+
+        //     for (const prop in controller) {
+        //         const value: any = controller[prop];
+        //         if (value instanceof Function) {
+        //             const url: string = Reflect.getMetadata(UrlHandlerMetaKey, controller, prop);
+        //             const method: string = Reflect.getMetadata(MethodMetaKey, controller, prop) || 'get';
+
+        //             if (url) {
+        //                 const middleware: any[] = Reflect.getMetadata(MiddlewareMetaKey, controller, prop) || [];
+        //                 const reqinjects: any[] = Reflect.getMetadata(ReqParamMetaKey, controller, prop) || [];
+
+        //                 // if there's 4 slots other than the injects, it is an error handler
+        //                 const isError = (value.length - reqinjects.length) === 4;
+
+        //                 const handler = isError ? function(err, req, res, next) {
+        //                     let args = [err].concat(reqinjects.map((i) => {
+        //                         const reqfield = req[i.type];
+        //                         return reqfield[i.name];
+        //                     })).concat([req, res, next]);
+
+        //                     value.apply(controller, args);
+        //                 } : function(req, res, next) {
+        //                     let args = [].concat(reqinjects.map((i) => {
+        //                         const reqfield = req[i.type];
+        //                         return reqfield[i.name];
+        //                     })).concat([req, res, next]);
+
+        //                     value.apply(controller, args);
+        //                 };
+
+        //                 const routerArgs: any[] = [].concat(url).concat(middleware).concat(handler);
+        //                 router[method].apply(router, routerArgs);
+        //             }
+        //         }
+        //     }
+        // });
+
+        app.use(createRoutes(basedir));
+    }
+}
+
+function createRoutes(basedir) {
+  const router = express.Router();
+  addRoutesInDir(basedir, '/', '/', router);
+  return router;
+}
+
+function addRoutesInDir(baseDir, dir, lastdir, router) {
+    const fullDir = path.join(baseDir, dir);
+
+    fs.stat(fullDir, function(err, stats) {
+        if (err) {
+            return;
+        }
+
+        if (stats.isDirectory()) {
+            fs.readdir(fullDir, function(err, files) {
+                if (err) {
+                    return;
+                }
+
+                files.forEach(function(file) {
+                    addRoutesInDir(baseDir, path.join(dir, file), dir, router);
+                });
+            });
+        } else {
+            // make sure it ends in .js
+            if (dir.lastIndexOf('.js') !== (dir.length - 3)) {
                 return;
             }
 
-            const fstats = fs.lstatSync(filepath);
-
-            if (!fstats.isFile()) {
-                return;
-            }
-
-            const ControllerClass = require(filepath).default;
+            const ControllerClass = require(fullDir).default;
             const controller = new ControllerClass();
 
             for (const prop in controller) {
@@ -96,13 +169,12 @@ export default class ExpressControllers {
                             value.apply(controller, args);
                         };
 
-                        const routerArgs: any[] = [].concat(url).concat(middleware).concat(handler);
+                        const fullurl = path.join(lastdir, url);
+                        const routerArgs: any[] = [].concat(fullurl).concat(middleware).concat(handler);
                         router[method].apply(router, routerArgs);
                     }
                 }
             }
-        });
-
-        app.use(router);
-    }
+        }
+  });
 }
