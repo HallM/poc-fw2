@@ -14,7 +14,7 @@ export default class ExpressSession {
     @GetProvider('express')
     @GetProvider('sessionStore', false)
     @After('CookieParser:load')
-    @After('PublicRoute:load')
+    @After('ExpressStatic:load')
     load(config, logger, app, sessionStore) {
         logger.debug('load sessions');
 

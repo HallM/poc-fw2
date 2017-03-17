@@ -133,7 +133,7 @@ export default class RouteLoader {
     @After('BodyParser:load')
     @After('ExpressSecurity:load')
     @After('ExpressSession:load')
-    @After('PublicRoute:load')
+    @After('ExpressStatic:load')
     @After('PassportLocalMongoose:load')
     @Before('ErrorRouter:load')
     @Before('Express:run')

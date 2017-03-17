@@ -34,8 +34,7 @@ export default class ExpressControllers {
     @After('BodyParser:load')
     @After('ExpressSecurity:load')
     @After('ExpressSession:load')
-    @After('PublicRoute:load')
-    // @After('PassportLocalMongoose:load') // TODO: make external
+    @After('ExpressStatic:load')
     @Before('ErrorRouter:load')
     @Before('Express:run')
     load(logger, config, app) {

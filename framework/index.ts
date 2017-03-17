@@ -26,10 +26,11 @@ PluginManager.batchLoad((batchLoader) => {
     require('./plugins/express-security/');
     require('./plugins/express-session/');
     require('./plugins/express-winston/');
-    require('./plugins/public-route/');
+    require('./plugins/express-static/');
     require('./plugins/logger/');
 
     require('./plugins/express-controllers/');
+    require('./plugins/dust-express-auto-routes/');
     // require('./plugins/express-mongoose-session/');
     // require('./plugins/mongoose/');
     // require('./plugins/passport/');
