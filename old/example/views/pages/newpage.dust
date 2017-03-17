@@ -1,5 +1,0 @@
-<html>
-  <body>
-    Hello new page {data.something}
-  </body>
-</html>

@@ -1,4 +1,0 @@
-{include "components/my-layout" (:content {fn
-  Second Page
-  {viewmodel::helloworld}
-})}

@@ -1,6 +1,0 @@
-<html>
-  <body>
-    MATT PAGE {thing}
-    {>"components/test" param="parameter" /}
-  </body>
-</html>

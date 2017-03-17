@@ -1,9 +1,0 @@
-{>"components/layout" /}
-
-{<title}Dynamic and Streaming page{/title}
-{<maincontent}
-    Hello {dynamicthing}<br>
-    Let's repeat: {dynamicthing}<br>
-    Maybe a: {>"components/test" param="something" /}
-    test: {afunction}<br>
-{/maincontent}

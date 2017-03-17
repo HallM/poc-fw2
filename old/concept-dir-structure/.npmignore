@@ -1,5 +1,0 @@
-node_modules/
-*.d.ts
-
-!index.d.ts
-!index.ref.d.ts
