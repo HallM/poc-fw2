@@ -1,4 +1,4 @@
-/// <reference path="../framework/_all.d.ts" />
+/// <reference path="../_all.d.ts" />
 
 /*
   api for plugin-system
@@ -25,17 +25,16 @@ import { AfterMetaKey } from './decorators/after';
 import { BeforeMetaKey } from './decorators/before';
 import { OnEventMetaKey } from './decorators/on';
 import { InjectServiceMetaKey } from './decorators/inject';
-import { ProvidesMetaKey } from './decorators/provides';
-import { GetProviderMetaKey } from './decorators/get-provider';
+import { ReturnsServiceMetaKey } from './decorators/returns-service';
+// import { GetProviderMetaKey } from './decorators/get-provider';
 
-export { Plugin } from './decorators/plugin';
 export { InitPhase } from './decorators/init-phase';
 export { After } from './decorators/after';
 export { Before } from './decorators/before';
 export { On } from './decorators/on';
 export { Inject } from './decorators/inject';
-export { Provides } from './decorators/provides';
-export { GetProvider } from './decorators/get-provider';
+export { ReturnsService } from './decorators/returns-service';
+// export { GetProvider } from './decorators/get-provider';
 
 function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
   let p = Promise.resolve();
@@ -102,12 +101,35 @@ class BatchLoader {
     dependencyNode.addDependent(dependentNode);
   }
 
+  addBatch(batch: BatchLoader): Promise<any> {
+    // copy everything from the batch
+    this.graphNodes = this.graphNodes.concat(batch.graphNodes);
+
+    for (const serviceName in batch.serviceToNodeMap) {
+      if (!this.serviceToNodeMap[serviceName]) {
+        this.serviceToNodeMap[serviceName] = batch.serviceToNodeMap[serviceName];
+      } else {
+        const nodeProvided = this.serviceToNodeMap[serviceName].providesService;
+        throw new Error(`${serviceName} was already provided by ${nodeProvided.toString()}`);
+      }
+    }
+
+    // effectively copy the promise over in case someone relied on it
+    this.finalPromise.then((...args) => {
+      batch.resolver(...args);
+    }).catch((...args) => {
+      batch.rejecter(...args);
+    });
+
+    return this.finalPromise;
+  }
+
   addPlugin(PluginClass: any): Promise<any> {
     if (!PluginClass) {
       throw new Error('Cannot add null or undefined as a plugin');
     }
 
-    const name: string = PluginClass.pluginName;
+    const name: string = PluginClass.name || PluginClass.pluginName;
     if (!name) {
       throw new Error('Cannot add a plugin without a pluginName');
     }
@@ -115,7 +137,7 @@ class BatchLoader {
     // get all "events", aka functions and their names
     // the event name is {plugin name}:{fn name}
     const plugin: any = new PluginClass();
-    injectInto(plugin, null);
+    // injectInto(plugin, null);
 
     const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, plugin) || [];
 
@@ -124,8 +146,8 @@ class BatchLoader {
       const waitsOn: any[] = Reflect.getMetadata(AfterMetaKey, plugin, event) || [];
       const blocks: any[] = Reflect.getMetadata(BeforeMetaKey, plugin, event) || [];
 
-      const provides: any[] = Reflect.getMetadata(ProvidesMetaKey, plugin, event) || [];
-      const provided: any[] = Reflect.getMetadata(GetProviderMetaKey, plugin, event) || [];
+      const provides: any[] = Reflect.getMetadata(ReturnsServiceMetaKey, plugin, event) || [];
+      const provided: any[] = Reflect.getMetadata(InjectServiceMetaKey, plugin, event) || [];
 
       const eventName: string = `${name}:${event}`;
 
@@ -322,38 +344,22 @@ export class ServiceContext {
     }
 }
 
-let currentBatch: BatchLoader = null;
 let completedPhases: PhaseGraphNode[] = [];
 const globalServiceContext = new ServiceContext();
 
 const eventListeners: any = {};
 
-function batchLoad(callback: Function): Promise<any> {
-  // don't run load for nested batches. all subbatches get loaded with the root-batch
-  const willLoad = !currentBatch;
-  if (!currentBatch) {
-    currentBatch = new BatchLoader();
-  }
-
-  callback(currentBatch);
-
-  if (willLoad) {
-    const loader = currentBatch;
-    currentBatch = null;
-    return loader.loadAll();
-  }
-
-  return currentBatch.finalPromise;
+function loadMultiple(callback: Function): BatchLoader {
+  const loader = new BatchLoader();
+  callback(loader);
+  return loader;
 }
 
-function addPlugin(PluginClass: any): Promise<any> {
-  if (currentBatch) {
-    return currentBatch.addPlugin(PluginClass);
-  } else {
-    var loader = new BatchLoader();
-    loader.addPlugin(PluginClass);
-    return loader.loadAll();
-  }
+function loadPlugin(PluginClass: any): Promise<any> {
+  // using a "batch" because BatchLoader has the logic
+  var loader = new BatchLoader();
+  loader.addPlugin(PluginClass);
+  return loader.loadAll();
 }
 
 function exposeService(name: string, service: any) {
@@ -370,19 +376,19 @@ function generateScope(): any {
   return svcScope;
 }
 
-function injectInto(obj: any, scope?: ServiceContext) {
-  const context = scope || globalServiceContext;
-  const onEvents: string[] = Reflect.getMetadata(OnEventMetaKey, obj) || {};
-  const injects: string[] = Reflect.getMetadata(InjectServiceMetaKey, obj) || {};
+// function injectInto(obj: any, scope?: ServiceContext) {
+//   const context = scope || globalServiceContext;
+//   const onEvents: string[] = Reflect.getMetadata(OnEventMetaKey, obj) || {};
+//   const injects: string[] = Reflect.getMetadata(InjectServiceMetaKey, obj) || {};
 
-  for (let prop in onEvents) {
-    on(onEvents[prop], obj[prop]);
-  }
+//   for (let prop in onEvents) {
+//     on(onEvents[prop], obj[prop]);
+//   }
 
-  for (let prop in injects) {
-    obj[prop] = context.getService(injects[prop]);
-  }
-}
+//   for (let prop in injects) {
+//     obj[prop] = context.getService(injects[prop]);
+//   }
+// }
 
 function on(event: string, listener: Function) {
   if (!eventListeners[event]) {
@@ -414,12 +420,12 @@ function trigger(event: string, evt?: any) {
 }
 
 export const PluginManager = {
-  batchLoad,
-  addPlugin,
+  loadMultiple,
+  loadPlugin,
   exposeService,
   getService,
   generateScope,
-  injectInto,
+  // injectInto,
   on,
   trigger
 };

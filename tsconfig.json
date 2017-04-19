@@ -5,6 +5,7 @@
         "experimentalDecorators": true
     },
     "exclude": [
+        "framework",
         "node_modules",
         "typings"
     ]
