@@ -22,7 +22,7 @@ import ExpressWinston from '../../kits/express-winston';
 import Logger from '../../kits/logger';
 
 // this is really just a bundle of things
-export default PluginManager.batchLoad((batchLoader) => {
+export default PluginManager.loadMultiple((batchLoader) => {
     batchLoader.addPlugin(BodyParser);
     batchLoader.addPlugin(Config);
     batchLoader.addPlugin(CookieParser);

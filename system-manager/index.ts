@@ -344,38 +344,22 @@ export class ServiceContext {
     }
 }
 
-let currentBatch: BatchLoader = null;
 let completedPhases: PhaseGraphNode[] = [];
 const globalServiceContext = new ServiceContext();
 
 const eventListeners: any = {};
 
-function batchLoad(callback: Function): BatchLoader {
-  // don't run load for nested batches. all subbatches get loaded with the root-batch
-  // const willLoad = !currentBatch;
-  if (!currentBatch) {
-    currentBatch = new BatchLoader();
-  }
-
-  callback(currentBatch);
-
-  // if (willLoad) {
-    const loader = currentBatch;
-    currentBatch = null;
-  //   return loader.loadAll();
-  // }
-
+function loadMultiple(callback: Function): BatchLoader {
+  const loader = new BatchLoader();
+  callback(loader);
   return loader;
 }
 
-function addPlugin(PluginClass: any): Promise<any> {
-  if (currentBatch) {
-    return currentBatch.addPlugin(PluginClass);
-  } else {
-    var loader = new BatchLoader();
-    loader.addPlugin(PluginClass);
-    return loader.loadAll();
-  }
+function loadPlugin(PluginClass: any): Promise<any> {
+  // using a "batch" because BatchLoader has the logic
+  var loader = new BatchLoader();
+  loader.addPlugin(PluginClass);
+  return loader.loadAll();
 }
 
 function exposeService(name: string, service: any) {
@@ -436,8 +420,8 @@ function trigger(event: string, evt?: any) {
 }
 
 export const PluginManager = {
-  batchLoad,
-  addPlugin,
+  loadMultiple,
+  loadPlugin,
   exposeService,
   getService,
   generateScope,

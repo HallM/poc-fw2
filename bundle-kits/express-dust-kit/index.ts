@@ -14,7 +14,7 @@ import DustView from '../../kits/dust-view';
 import ExpressControllers from '../../kits/express-controllers';
 
 // this is really just a bundle of things
-export default PluginManager.batchLoad((batchLoader) => {
+export default PluginManager.loadMultiple((batchLoader) => {
     batchLoader.addBatch(ExpressKit);
     batchLoader.addPlugin(DustExpressAutoRoutes);
     batchLoader.addPlugin(DustView);
