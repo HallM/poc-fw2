@@ -1,4 +1,4 @@
-/// <reference path="../framework/_all.d.ts" />
+/// <reference path="../_all.d.ts" />
 
 /*
   api for plugin-system
@@ -99,6 +99,29 @@ class BatchLoader {
       dependentNode.addWeakDependency(dependencyNode);
     }
     dependencyNode.addDependent(dependentNode);
+  }
+
+  addBatch(batch: BatchLoader): Promise<any> {
+    // copy everything from the batch
+    this.graphNodes = this.graphNodes.concat(batch.graphNodes);
+
+    for (const serviceName in batch.serviceToNodeMap) {
+      if (!this.serviceToNodeMap[serviceName]) {
+        this.serviceToNodeMap[serviceName] = batch.serviceToNodeMap[serviceName];
+      } else {
+        const nodeProvided = this.serviceToNodeMap[serviceName].providesService;
+        throw new Error(`${serviceName} was already provided by ${nodeProvided.toString()}`);
+      }
+    }
+
+    // effectively copy the promise over in case someone relied on it
+    this.finalPromise.then((...args) => {
+      batch.resolver(...args);
+    }).catch((...args) => {
+      batch.rejecter(...args);
+    });
+
+    return this.finalPromise;
   }
 
   addPlugin(PluginClass: any): Promise<any> {
@@ -327,22 +350,22 @@ const globalServiceContext = new ServiceContext();
 
 const eventListeners: any = {};
 
-function batchLoad(callback: Function): Promise<any> {
+function batchLoad(callback: Function): BatchLoader {
   // don't run load for nested batches. all subbatches get loaded with the root-batch
-  const willLoad = !currentBatch;
+  // const willLoad = !currentBatch;
   if (!currentBatch) {
     currentBatch = new BatchLoader();
   }
 
   callback(currentBatch);
 
-  if (willLoad) {
+  // if (willLoad) {
     const loader = currentBatch;
     currentBatch = null;
-    return loader.loadAll();
-  }
+  //   return loader.loadAll();
+  // }
 
-  return currentBatch.finalPromise;
+  return loader;
 }
 
 function addPlugin(PluginClass: any): Promise<any> {

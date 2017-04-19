@@ -1,8 +1,8 @@
-import ExpressDustKit from '../express-dust-kit/';
-import GlobalServiceManager from '../service-manager/';
+import ExpressDustKit from '../bundle-kits/express-dust-kit/';
+import { PluginManager } from '../system-manager/';
 
-ExpressDustKit.then(() => {
-    const logger = GlobalServiceManager.getService('logger');
+ExpressDustKit.loadAll().then(() => {
+    const logger = PluginManager.getService('logger');
     logger.info('Server is ready');
 }).catch((err) => {
     console.error(err);
