@@ -3,8 +3,7 @@
 'use strict';
 
 import { PluginManager, InitPhase, After, Before } from '../../system-manager/';
-import { Inject, ReturnsService } from '../../system-manager/'
-import GlobalServiceManager from '../../service-manager/'
+import { Inject, ReturnsService } from '../../system-manager/';
 
 import * as crypto from 'crypto';
 
