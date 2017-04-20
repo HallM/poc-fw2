@@ -1,19 +1,12 @@
 /// <reference path="../_all.d.ts" />
 
 /*
-  api for plugin-system
-
-  addPlugin(string, any)
-  determineOrder()
-  loadAll()
-
   3 phases:
   - discovery phase (only one that can add plugins, cannot call loadAll)
     - needs the graph of events
   - ordered phase (can only call loadAll from here)
     - needs the exec stack of events
   - loaded (can not do anything now)
-
 */
 
 import 'reflect-metadata';
@@ -26,7 +19,6 @@ import { BeforeMetaKey } from './decorators/before';
 import { OnEventMetaKey } from './decorators/on';
 import { InjectServiceMetaKey } from './decorators/inject';
 import { ReturnsServiceMetaKey } from './decorators/returns-service';
-// import { GetProviderMetaKey } from './decorators/get-provider';
 
 export { InitPhase } from './decorators/init-phase';
 export { After } from './decorators/after';
@@ -34,7 +26,6 @@ export { Before } from './decorators/before';
 export { On } from './decorators/on';
 export { Inject } from './decorators/inject';
 export { ReturnsService } from './decorators/returns-service';
-// export { GetProvider } from './decorators/get-provider';
 
 function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
   let p = Promise.resolve();
@@ -124,35 +115,34 @@ class BatchLoader {
     return this.finalPromise;
   }
 
-  addPlugin(PluginClass: any): Promise<any> {
-    if (!PluginClass) {
-      throw new Error('Cannot add null or undefined as a plugin');
+  addKit(KitClass: any, kitOptions?: any): Promise<any> {
+    if (!KitClass) {
+      throw new Error('Cannot add null or undefined as a kit');
     }
 
-    const name: string = PluginClass.name || PluginClass.pluginName;
+    const name: string = KitClass.name || KitClass.kitName;
     if (!name) {
-      throw new Error('Cannot add a plugin without a pluginName');
+      throw new Error('Cannot add a kit without a defined kitName');
     }
 
     // get all "events", aka functions and their names
-    // the event name is {plugin name}:{fn name}
-    const plugin: any = new PluginClass();
-    // injectInto(plugin, null);
+    // the event name is ${kit name}:${fn name}
+    const kit: any = new KitClass(kitOptions);
 
-    const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, plugin) || [];
+    const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, kit) || [];
 
     phases.forEach(event => {
-      const fn: Function = plugin[event];
-      const waitsOn: any[] = Reflect.getMetadata(AfterMetaKey, plugin, event) || [];
-      const blocks: any[] = Reflect.getMetadata(BeforeMetaKey, plugin, event) || [];
+      const fn: Function = kit[event];
+      const waitsOn: any[] = Reflect.getMetadata(AfterMetaKey, kit, event) || [];
+      const blocks: any[] = Reflect.getMetadata(BeforeMetaKey, kit, event) || [];
 
-      const provides: any[] = Reflect.getMetadata(ReturnsServiceMetaKey, plugin, event) || [];
-      const provided: any[] = Reflect.getMetadata(InjectServiceMetaKey, plugin, event) || [];
+      const provides: any[] = Reflect.getMetadata(ReturnsServiceMetaKey, kit, event) || [];
+      const provided: any[] = Reflect.getMetadata(InjectServiceMetaKey, kit, event) || [];
 
       const eventName: string = `${name}:${event}`;
 
       const node: PhaseGraphNode = this.findOrCreateNode(eventName);
-      node.claimNode(plugin, fn);
+      node.claimNode(kit, fn);
 
       waitsOn.forEach(dep => {
         const depNode: PhaseGraphNode = this.findOrCreateNode(dep.event);
@@ -323,7 +313,7 @@ class BatchLoader {
 
     if (unclaimed.length) {
       const missingNames: string = unclaimed.map(node => node.toString()).join(', ');
-      throw new Error('The following plugins are missing: ' + missingNames);
+      throw new Error('The following kits are missing: ' + missingNames);
     }
   }
 }
@@ -355,10 +345,10 @@ function loadMultiple(callback: Function): BatchLoader {
   return loader;
 }
 
-function loadPlugin(PluginClass: any): Promise<any> {
+function loadKit(KitClass: any): Promise<any> {
   // using a "batch" because BatchLoader has the logic
   var loader = new BatchLoader();
-  loader.addPlugin(PluginClass);
+  loader.addKit(KitClass);
   return loader.loadAll();
 }
 
@@ -375,20 +365,6 @@ function generateScope(): any {
   trigger('generate-scope', svcScope);
   return svcScope;
 }
-
-// function injectInto(obj: any, scope?: ServiceContext) {
-//   const context = scope || globalServiceContext;
-//   const onEvents: string[] = Reflect.getMetadata(OnEventMetaKey, obj) || {};
-//   const injects: string[] = Reflect.getMetadata(InjectServiceMetaKey, obj) || {};
-
-//   for (let prop in onEvents) {
-//     on(onEvents[prop], obj[prop]);
-//   }
-
-//   for (let prop in injects) {
-//     obj[prop] = context.getService(injects[prop]);
-//   }
-// }
 
 function on(event: string, listener: Function) {
   if (!eventListeners[event]) {
@@ -419,13 +395,12 @@ function trigger(event: string, evt?: any) {
   }
 }
 
-export const PluginManager = {
+export const KitManager = {
   loadMultiple,
-  loadPlugin,
+  loadKit,
   exposeService,
   getService,
   generateScope,
-  // injectInto,
   on,
   trigger
 };

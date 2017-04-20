@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager } from '../../system-manager/';
+import { KitManager } from '../../system-manager/';
 
 export { Query, Param, Header, Body } from '../../kits/express-controllers/decorators/req-param';
 export { UrlHandler } from '../../kits/express-controllers/decorators/url-handler';
@@ -22,7 +22,7 @@ import ExpressWinston from '../../kits/express-winston';
 import Logger from '../../kits/logger';
 
 // this is really just a bundle of things
-export default PluginManager.loadMultiple((batchLoader) => {
+export default KitManager.loadMultiple((batchLoader) => {
     batchLoader.addPlugin(BodyParser);
     batchLoader.addPlugin(Config);
     batchLoader.addPlugin(CookieParser);

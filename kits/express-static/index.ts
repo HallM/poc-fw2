@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager, InitPhase, After, Before } from '../../system-manager/';
+import { KitManager, InitPhase, After, Before } from '../../system-manager/';
 import { Inject, ReturnsService } from '../../system-manager/'
 
 import * as express from 'express';

@@ -2,7 +2,7 @@
 
 'use strict';
 
-import { PluginManager } from '../../system-manager/';
+import { KitManager } from '../../system-manager/';
 
 export {
     Query, Param, Header, Body, UrlHandler, Middleware, Method
@@ -14,7 +14,7 @@ import DustView from '../../kits/dust-view';
 import ExpressControllers from '../../kits/express-controllers';
 
 // this is really just a bundle of things
-export default PluginManager.loadMultiple((batchLoader) => {
+export default KitManager.loadMultiple((batchLoader) => {
     batchLoader.addBatch(ExpressKit);
     batchLoader.addPlugin(DustExpressAutoRoutes);
     batchLoader.addPlugin(DustView);
