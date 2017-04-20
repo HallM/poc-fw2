@@ -25,13 +25,8 @@ export default class Logger {
         const settings = config.get('email');
 
         return new EmailService(
-            settings.configDirectory,
-            settings.viewsDirectory,
-            settings.mailgunDomain,
-            settings.mailgunApiKey,
-            settings.siteAddress,
-            settings.defaultFrom,
-            logger
+            logger,
+            settings
         );
     }
 }
