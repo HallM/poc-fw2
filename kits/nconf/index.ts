@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { KitManager, InitPhase, After, Before } from '../../system-manager/';
-import { Inject, ReturnsService } from '../../system-manager/'
+import { KitManager, InitPhase, After, Before } from '../../kit-manager/';
+import { Inject, ReturnsService } from '../../kit-manager/'
 
 import * as nconf from 'nconf';
 
-export default class Config {
+export default class NconfKit {
     @InitPhase
     @ReturnsService('config')
     load() {

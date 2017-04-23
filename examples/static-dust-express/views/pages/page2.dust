@@ -1,0 +1,9 @@
+{> "layouts/main" /}
+
+{<page_title}Page 2 title{/page_title}
+
+{<page_content}
+<p>Page 2 content</p>
+
+<p><a href="/">Home page</a></p>
+{/page_content}

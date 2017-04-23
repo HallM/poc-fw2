@@ -10,8 +10,8 @@
 
 'use strict';
 
-import { KitManager, InitPhase, After, Before } from '../../system-manager/';
-import { Inject, ReturnsService } from '../../system-manager/'
+import { KitManager, InitPhase, After, Before } from '../../kit-manager/';
+import { Inject, ReturnsService } from '../../kit-manager/'
 
 import * as express from 'express';
 import * as path from 'path';
@@ -26,8 +26,7 @@ export default class DustExpressAutoRoutes {
         'BodyParser:load',
         'ExpressSecurity:load',
         'ExpressSession:load',
-        'ExpressStatic:load',
-        'ExpressControllers:load'
+        'ExpressStatic:load'
     ])
     @Before(['ErrorRouter:load', 'Express:run'])
     load(logger, config, app) {

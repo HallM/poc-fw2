@@ -7,7 +7,7 @@ function createStaticHandler(basedir) {
   return function(req, res, next) {
     // also, make sure if it ends in a slash, then use index.dust
     const hasEndingSlash = req.path[req.path.length - 1] === '/';
-    const urlpath = 'static/' + req.path.substr(1) + (hasEndingSlash ? 'index' : '');
+    const urlpath = path.join(basedir,  req.path.substr(1) + (hasEndingSlash ? 'index' : ''));
 
     // security: make sure someone doesnt navigate out of the top folder with urlpath
     if (urlpath.indexOf('/./') !== -1 || urlpath.indexOf('/../') !== -1) {

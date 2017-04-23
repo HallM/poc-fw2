@@ -10,8 +10,8 @@
 
 'use strict';
 
-import { KitManager, InitPhase, After, Before } from '../../system-manager/';
-import { Inject, ReturnsService } from '../../system-manager/'
+import { KitManager, InitPhase, After, Before } from '../../kit-manager/';
+import { Inject, ReturnsService } from '../../kit-manager/'
 
 import { ReqParamMetaKey } from './decorators/req-param';
 import { UrlHandlerMetaKey } from './decorators/url-handler';

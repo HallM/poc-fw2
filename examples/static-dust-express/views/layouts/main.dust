@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>{+page_title}Default Page Title{/page_title}</title>
+
+    <meta name="viewport" content="width=device-width, user-scalable=yes">
+  </head>
+  <body>
+
+    {+page_content}{/page_content}
+
+  </body>
+</html>

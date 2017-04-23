@@ -1,4 +1,4 @@
-import { UrlHandler, Method } from '../../../bundle-kits/express-dust-kit/';
+import { UrlHandler, Method } from '../../';
 
 export default class MainController {
   @UrlHandler('/')

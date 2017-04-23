@@ -1,4 +1,6 @@
-import { Query, Param, Header, Body, UrlHandler, Middleware, Method } from '../../bundle-kits/express-dust-kit/';
+import {
+  Query, Param, Header, Body, UrlHandler, Middleware, Method
+} from '../';
 
 function test1(req, res, next) {
   console.log('test1');

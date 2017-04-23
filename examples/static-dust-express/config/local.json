@@ -1,0 +1,8 @@
+{
+  "logger": {
+    "logLevel": "debug"
+  },
+  "dustAutoRoutes": {
+    "directory": "pages"
+  }
+}

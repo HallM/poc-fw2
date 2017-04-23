@@ -2,12 +2,12 @@
 
 'use strict';
 
-import { KitManager, InitPhase, After, Before } from '../../system-manager/';
-import { Inject, ReturnsService } from '../../system-manager/'
+import { KitManager, InitPhase, After, Before } from '../../kit-manager/';
+import { Inject, ReturnsService } from '../../kit-manager/'
 
 import * as winston from 'winston';
 
-export default class Logger {
+export default class WinstonKit {
     @InitPhase
     @ReturnsService('logger')
     @Inject('config')
