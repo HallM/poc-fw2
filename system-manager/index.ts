@@ -32,30 +32,7 @@ function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
   const count = execNodes.length;
 
   return Promise.all(execNodes.map((node) => {
-    const args = node.wantsProviders().map(serviceName => getService(serviceName));
-    return node.execute(args).then((result:any) => {
-      const provides = node.providesServices();
-      if (!provides.length) {
-        return null;
-      }
-
-      if (!result) {
-        throw new Error(`${node.toString()} did not provide the promised services: "${provides.join(', ')}"`);
-      }
-
-      if (provides.length === 1) {
-        exposeService(provides[0], result);
-        return result;
-      } else if (Array.isArray(result) && result.length == provides.length) {
-        provides.forEach((serviceName, index) => {
-          exposeService(serviceName, result[index]);
-        });
-        return result;
-      } else {
-        const start = result && Array.isArray(result) ? result.length : 0;
-        throw new Error(`${node.toString()} did not provide the promised services: "${provides.slice(start).join(', ')}"`);
-      }
-    });
+    return node.execute();
   })).then(() => {
     completedPhases = completedPhases.concat(execNodes);
   });
