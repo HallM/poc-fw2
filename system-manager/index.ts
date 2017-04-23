@@ -63,6 +63,7 @@ function loadAsyncGroup(execNodes: PhaseGraphNode[]): Promise<any> {
 
 class BatchLoader {
   private graphNodes: PhaseGraphNode[]
+  private wildcardNodes: PhaseGraphNode[]
   finalPromise: Promise<any>
 
   private serviceToNodeMap: any
@@ -72,24 +73,13 @@ class BatchLoader {
 
   constructor() {
     this.graphNodes = [];
+    this.wildcardNodes = [];
     this.serviceToNodeMap = {};
 
     this.finalPromise = new Promise((resolve, reject) => {
       this.resolver = resolve;
       this.rejecter = reject;
     });
-  }
-
-  linkDependentToDependency(dependent: string, dependency: string, required: boolean = true) {
-    const dependentNode: PhaseGraphNode = this.findOrCreateNode(dependent);
-    const dependencyNode: PhaseGraphNode = this.findOrCreateNode(dependency);
-
-    if (required) {
-      dependentNode.addDependency(dependencyNode);
-    } else {
-      dependentNode.addWeakDependency(dependencyNode);
-    }
-    dependencyNode.addDependent(dependentNode);
   }
 
   addBatch(batch: BatchLoader): Promise<any> {
@@ -130,6 +120,7 @@ class BatchLoader {
     const kit: any = new KitClass(kitOptions);
 
     const phases: string[] = Reflect.getMetadata(InitPhaseMetaKey, kit) || [];
+    const inject: any[] = Reflect.getMetadata(InjectServiceMetaKey, kit) || [];
 
     phases.forEach(event => {
       const fn: Function = kit[event];
@@ -183,7 +174,7 @@ class BatchLoader {
         node.addProvides(serviceName);
       });
 
-      provided.forEach((serviceInfo) => {
+      provided.concat(inject).forEach((serviceInfo) => {
         const serviceName = serviceInfo.providerName;
         const isRequired = serviceInfo.required;
 
@@ -229,6 +220,15 @@ class BatchLoader {
     return this.finalPromise;
   }
 
+  private mapWildCards() {
+    this.wildcardNodes.forEach((wildcard) => {
+      const relatedNodes = this.graphNodes.filter((node) => node.matchesWildcard(wildcard.eventName));
+      wildcard.replaceWith(relatedNodes);
+    });
+
+    this.graphNodes = this.graphNodes.filter(node => this.wildcardNodes.indexOf(node) === -1);
+  }
+
   private addBlocksForProviders() {
     const unprovidedServices = [];
     for (const serviceName in this.serviceToNodeMap) {
@@ -262,6 +262,7 @@ class BatchLoader {
   private determineOrder(): PhaseGraphNode[][] {
     // be sure to add the blockers for GetProvider
     this.addBlocksForProviders();
+    this.mapWildCards();
 
     let nodes = this.graphNodes.filter(node => !node.isUnclaimed() || node.isRequired());
     this.checkForUnclaimed(nodes);
@@ -302,6 +303,11 @@ class BatchLoader {
     if (!foundNode) {
       const newNode = new PhaseGraphNode(eventName);
       this.graphNodes.push(newNode);
+
+      if (eventName.indexOf(':') === -1) {
+        this.wildcardNodes.push(newNode);
+      }
+
       return newNode;
     } else {
       return foundNode;
@@ -389,7 +395,7 @@ function on(event: string, listener: Function) {
 function trigger(event: string, evt?: any) {
   const listeners: Function[] = eventListeners[event];
   if (listeners) {
-    listeners.forEach(function(listener) {
+    listeners.forEach((listener) => {
       listener(evt);
     });
   }

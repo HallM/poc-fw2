@@ -30,11 +30,11 @@ import * as express from 'express';
 export default class ExpressControllers {
     @InitPhase
     @Inject(['logger', 'config', 'express'])
-    @After('BodyParser:load')
-    @After('ExpressSecurity:load')
-    @After('ExpressSession:load')
-    @After('ExpressStatic:load')
-    @Before('ErrorRouter:load')
+    @After('BodyParser')
+    @After('ExpressSecurity')
+    @After('ExpressSession')
+    @After('ExpressStatic')
+    @Before('ErrorRouter')
     @Before('Express:run')
     load(logger, config, app) {
         logger.debug('load controllers and routes');
@@ -46,61 +46,6 @@ export default class ExpressControllers {
         });
 
         const basedir = path.resolve(config.get('expressControllers:directory'));
-        // const router = express.Router();
-
-        // const files = fs.readdirSync(basedir);
-
-        // files.forEach((file) => {
-        //     const filepath = path.resolve(basedir, file);
-
-        //     if (file.length < 4 || file.substring(file.length - 3) !== '.js') {
-        //         return;
-        //     }
-
-        //     const fstats = fs.lstatSync(filepath);
-
-        //     if (!fstats.isFile()) {
-        //         return;
-        //     }
-
-        //     const ControllerClass = require(filepath).default;
-        //     const controller = new ControllerClass();
-
-        //     for (const prop in controller) {
-        //         const value: any = controller[prop];
-        //         if (value instanceof Function) {
-        //             const url: string = Reflect.getMetadata(UrlHandlerMetaKey, controller, prop);
-        //             const method: string = Reflect.getMetadata(MethodMetaKey, controller, prop) || 'get';
-
-        //             if (url) {
-        //                 const middleware: any[] = Reflect.getMetadata(MiddlewareMetaKey, controller, prop) || [];
-        //                 const reqinjects: any[] = Reflect.getMetadata(ReqParamMetaKey, controller, prop) || [];
-
-        //                 // if there's 4 slots other than the injects, it is an error handler
-        //                 const isError = (value.length - reqinjects.length) === 4;
-
-        //                 const handler = isError ? function(err, req, res, next) {
-        //                     let args = [err].concat(reqinjects.map((i) => {
-        //                         const reqfield = req[i.type];
-        //                         return reqfield[i.name];
-        //                     })).concat([req, res, next]);
-
-        //                     value.apply(controller, args);
-        //                 } : function(req, res, next) {
-        //                     let args = [].concat(reqinjects.map((i) => {
-        //                         const reqfield = req[i.type];
-        //                         return reqfield[i.name];
-        //                     })).concat([req, res, next]);
-
-        //                     value.apply(controller, args);
-        //                 };
-
-        //                 const routerArgs: any[] = [].concat(url).concat(middleware).concat(handler);
-        //                 router[method].apply(router, routerArgs);
-        //             }
-        //         }
-        //     }
-        // });
 
         app.use(createRoutes(basedir));
     }

@@ -23,15 +23,15 @@ import Logger from '../../kits/logger';
 
 // this is really just a bundle of things
 export default KitManager.loadMultiple((batchLoader) => {
-    batchLoader.addPlugin(BodyParser);
-    batchLoader.addPlugin(Config);
-    batchLoader.addPlugin(CookieParser);
-    batchLoader.addPlugin(ErrorRouter);
-    batchLoader.addPlugin(Express);
-    batchLoader.addPlugin(ExpressCompression);
-    batchLoader.addPlugin(ExpressSecurity);
-    batchLoader.addPlugin(ExpressSession);
-    batchLoader.addPlugin(ExpressStatic);
-    batchLoader.addPlugin(ExpressWinston);
-    batchLoader.addPlugin(Logger);
+    batchLoader.addKit(BodyParser);
+    batchLoader.addKit(Config);
+    batchLoader.addKit(CookieParser);
+    batchLoader.addKit(ErrorRouter);
+    batchLoader.addKit(Express);
+    batchLoader.addKit(ExpressCompression);
+    batchLoader.addKit(ExpressSecurity);
+    batchLoader.addKit(ExpressSession);
+    batchLoader.addKit(ExpressStatic);
+    batchLoader.addKit(ExpressWinston);
+    batchLoader.addKit(Logger);
 });

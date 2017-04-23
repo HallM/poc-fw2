@@ -31,7 +31,7 @@ export default class DustExpressAutoRoutes {
     ])
     @Before(['ErrorRouter:load', 'Express:run'])
     load(logger, config, app) {
-        logger.debug('load controllers and routes');
+        logger.debug('load static-auto routes');
 
         config.defaults({
             dustAutoRoutes: {

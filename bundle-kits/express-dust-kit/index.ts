@@ -16,7 +16,7 @@ import ExpressControllers from '../../kits/express-controllers';
 // this is really just a bundle of things
 export default KitManager.loadMultiple((batchLoader) => {
     batchLoader.addBatch(ExpressKit);
-    batchLoader.addPlugin(DustExpressAutoRoutes);
-    batchLoader.addPlugin(DustView);
-    batchLoader.addPlugin(ExpressControllers);
+    batchLoader.addKit(DustExpressAutoRoutes);
+    batchLoader.addKit(DustView);
+    batchLoader.addKit(ExpressControllers);
 });

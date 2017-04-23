@@ -65,6 +65,13 @@ export class PhaseGraphNode {
         }
     }
 
+    removeDependency(node: PhaseGraphNode) {
+        const index = this.dependencies.indexOf(node);
+        if (index !== -1) {
+            this.dependencies.splice(index, 1);
+        }
+    }
+
     addDependent(node: PhaseGraphNode) {
         this.addWeakDependent(node);
         node.required = true;
@@ -79,6 +86,29 @@ export class PhaseGraphNode {
         if (this.dependents.indexOf(node) === -1) {
             this.dependents.push(node);
         }
+    }
+
+    removeDependent(node: PhaseGraphNode) {
+        const index = this.dependents.indexOf(node);
+        if (index !== -1) {
+            this.dependents.splice(index, 1);
+        }
+    }
+
+    replaceWith(nodes: PhaseGraphNode[]) {
+        nodes.forEach((node) => {
+            node.required = this.required;
+
+            this.dependencies.forEach((dep) => {
+                dep.removeDependent(this);
+                dep.addWeakDependent(node);
+            });
+
+            this.dependents.forEach((dep) => {
+                dep.removeDependency(this);
+                dep.addWeakDependency(node);
+            });
+        })
     }
 
     execute(args: any[] = []) {
@@ -102,6 +132,11 @@ export class PhaseGraphNode {
 
     isSelf(event: string): boolean {
         return event === this.eventName;
+    }
+
+    matchesWildcard(wildCardName: string): boolean {
+        const kitNamePart = this.eventName.substring(0, wildCardName.length);
+        return kitNamePart === wildCardName && wildCardName !== this.eventName;
     }
 
     // while this could go infinite loop, the addDependency/addDependent should protect against this
